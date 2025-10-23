@@ -90,10 +90,10 @@ If the user asks "what are my top tracks", "show my top songs", "my top Spotify 
 If the user asks "what did I recently play", "my recent tracks", "recently played", or similar questions about their recent listening history, use the loginToSpotify tool first to provide the login link.
 If the user asks about Spotify login, authentication, or wants to access their Spotify data, use the loginToSpotify tool first.
 If the user asks "am I logged in?", "am I login?", "check my login status", or similar questions about their Spotify login status, use the checkSpotifyLogin tool.
-If the user provides an authorization code from Spotify callback and wants to see their top artists, use the getUserTopArtists tool with the authorization code.
-If the user provides an authorization code from Spotify callback and wants to see their top tracks, use the getUserTopTracks tool with the authorization code.
-If the user provides an authorization code from Spotify callback and wants to see their recently played tracks, use the getUserRecentlyPlayed tool with the authorization code.
-If the user provides an authorization code from Spotify callback and wants to see their profile data, use the getUserSpotifyProfile tool with the authorization code.
+If the user asks for their top artists, use the getUserTopArtists tool (authCode is optional if already logged in).
+If the user asks for their top tracks, use the getUserTopTracks tool (authCode is optional if already logged in).
+If the user asks for their recently played tracks, use the getUserRecentlyPlayed tool (authCode is optional if already logged in).
+If the user asks for their profile data, use the getUserSpotifyProfile tool (authCode is optional if already logged in).
 `,
 
           messages: convertToModelMessages(processedMessages),
@@ -165,6 +165,30 @@ export default {
           { status: 404 }
         );
       }
+    }
+
+    if (url.pathname === "/get-tokens") {
+      const storedTokens = await env.AUTH_CODES.get("spotifyTokens");
+      if (storedTokens) {
+        return new Response(storedTokens);
+      } else {
+        return new Response(JSON.stringify({ error: "No tokens found" }), {
+          status: 404
+        });
+      }
+    }
+
+    if (url.pathname === "/store-tokens") {
+      if (request.method === "POST") {
+        const tokenData = await request.json();
+        await env.AUTH_CODES.put("spotifyTokens", JSON.stringify(tokenData), {
+          expirationTtl: 3600
+        }); // 1 hour TTL
+        return new Response(JSON.stringify({ success: true }));
+      }
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405
+      });
     }
 
     if (url.pathname === "/test") {

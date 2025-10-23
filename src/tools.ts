@@ -9,6 +9,149 @@ import type { Chat } from "./server";
 import { getCurrentAgent } from "agents";
 import { scheduleSchema } from "agents/schedule";
 
+// Helper function to get or exchange access token
+async function getAccessToken(authCode?: string): Promise<string> {
+  try {
+    // If no authCode provided, try to get it from stored location
+    if (!authCode) {
+      const authCodeUrl = "https://damp-block-d4f7.nathanaela-2002.workers.dev/get-auth-code";
+      const authResponse = await fetch(authCodeUrl);
+      if (authResponse.ok) {
+        const authData = (await authResponse.json()) as { authCode: string };
+        authCode = authData.authCode;
+      }
+    }
+
+    // First, try to get stored tokens from KV
+    const storedTokensUrl =
+      "https://damp-block-d4f7.nathanaela-2002.workers.dev/get-tokens";
+    const storedResponse = await fetch(storedTokensUrl);
+
+    if (storedResponse.ok) {
+      const tokenData = (await storedResponse.json()) as {
+        access_token: string;
+        expires_at: number;
+        refresh_token: string;
+      };
+
+      // Check if token is still valid (not expired)
+      if (Date.now() < tokenData.expires_at) {
+        return tokenData.access_token;
+      }
+
+      // Token expired, try to refresh it
+      if (tokenData.refresh_token) {
+        const refreshResponse = await fetch(
+          "https://accounts.spotify.com/api/token",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Authorization:
+                "Basic " +
+                Buffer.from(
+                  `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+                ).toString("base64")
+            },
+            body: new URLSearchParams({
+              grant_type: "refresh_token",
+              refresh_token: tokenData.refresh_token
+            })
+          }
+        );
+
+        if (refreshResponse.ok) {
+          const newTokens = (await refreshResponse.json()) as {
+            access_token: string;
+            expires_in: number;
+            refresh_token?: string;
+          };
+
+          // Store the new tokens
+          const expiresAt = Date.now() + newTokens.expires_in * 1000;
+          await fetch(
+            "https://damp-block-d4f7.nathanaela-2002.workers.dev/store-tokens",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                access_token: newTokens.access_token,
+                expires_at: expiresAt,
+                refresh_token:
+                  newTokens.refresh_token || tokenData.refresh_token
+              })
+            }
+          );
+
+          return newTokens.access_token;
+        }
+      }
+    }
+
+    // No valid stored token, need to exchange authorization code
+    if (!authCode) {
+      throw new Error(
+        "No authorization code provided and no valid stored token"
+      );
+    }
+
+    const tokenResponse = await fetch(
+      "https://accounts.spotify.com/api/token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+            ).toString("base64")
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code: authCode,
+          redirect_uri:
+            "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback"
+        })
+      }
+    );
+
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      throw new Error(
+        `Failed to exchange authorization code: ${tokenResponse.status} - ${errorText}`
+      );
+    }
+
+    const tokens = (await tokenResponse.json()) as {
+      access_token: string;
+      expires_in: number;
+      refresh_token: string;
+    };
+
+    // Store the tokens for future use
+    const expiresAt = Date.now() + tokens.expires_in * 1000;
+    await fetch(
+      "https://damp-block-d4f7.nathanaela-2002.workers.dev/store-tokens",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          access_token: tokens.access_token,
+          expires_at: expiresAt,
+          refresh_token: tokens.refresh_token
+        })
+      }
+    );
+
+    return tokens.access_token;
+  } catch (error) {
+    throw new Error(
+      `Token management error: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
 /**
  * Weather information tool that requires human confirmation
  * When invoked, this will present a confirmation dialog to the user
@@ -42,52 +185,27 @@ Click this link to authenticate: ${spotifyLoginUrl}`;
  * This tool exchanges the auth code for an access token and fetches top artists
  */
 const getUserTopArtists = tool({
-  description: "Get user's top Spotify artists using their authorization code",
+  description:
+    "Get user's top Spotify artists using token-based authentication",
   inputSchema: z.object({
     authCode: z
       .string()
-      .describe("The authorization code received from Spotify callback")
+      .optional()
+      .describe(
+        "The authorization code (optional if tokens are already stored)"
+      )
   }),
   execute: async ({ authCode }) => {
     try {
-      //Exchange authorization code for access token
-      const tokenResponse = await fetch(
-        "https://accounts.spotify.com/api/token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: new URLSearchParams({
-            grant_type: "authorization_code",
-            code: authCode,
-            redirect_uri:
-              "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback",
-            client_id: process.env.SPOTIFY_CLIENT_ID || "",
-            client_secret: process.env.SPOTIFY_CLIENT_SECRET || ""
-          })
-        }
-      );
+      // Get access token (will use stored token or exchange code)
+      const accessToken = await getAccessToken(authCode);
 
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        return `Failed to exchange authorization code for access token. Error: ${tokenResponse.status} - ${errorText}`;
-      }
-
-      const tokenData = (await tokenResponse.json()) as {
-        access_token: string;
-        token_type: string;
-        expires_in: number;
-        refresh_token: string;
-        scope: string;
-      };
-
-      // Step 2: Get user's top artists
+      // Get user's top artists
       const artistsResponse = await fetch(
         "https://api.spotify.com/v1/me/top/artists?time_range=short_term&limit=10",
         {
           headers: {
-            Authorization: `Bearer ${tokenData.access_token}`
+            Authorization: `Bearer ${accessToken}`
           }
         }
       );
@@ -288,50 +406,25 @@ const cancelScheduledTask = tool({
  * This tool exchanges the auth code for an access token and fetches user profile
  */
 const getUserSpotifyProfile = tool({
-  description: "Get user's Spotify profile data using their authorization code",
+  description:
+    "Get user's Spotify profile data using token-based authentication",
   inputSchema: z.object({
     authCode: z
       .string()
-      .describe("The authorization code received from Spotify callback")
+      .optional()
+      .describe(
+        "The authorization code (optional if tokens are already stored)"
+      )
   }),
   execute: async ({ authCode }) => {
     try {
-      // Step 1: Exchange authorization code for access token
-      const tokenResponse = await fetch(
-        "https://accounts.spotify.com/api/token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: new URLSearchParams({
-            grant_type: "authorization_code",
-            code: authCode,
-            redirect_uri:
-              "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback",
-            client_id: process.env.SPOTIFY_CLIENT_ID || "",
-            client_secret: process.env.SPOTIFY_CLIENT_SECRET || ""
-          })
-        }
-      );
+      // Get access token (will use stored token or exchange code)
+      const accessToken = await getAccessToken(authCode);
 
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        return `Failed to exchange authorization code for access token. Error: ${tokenResponse.status} - ${errorText}`;
-      }
-
-      const tokenData = (await tokenResponse.json()) as {
-        access_token: string;
-        token_type: string;
-        expires_in: number;
-        refresh_token: string;
-        scope: string;
-      };
-
-      // Step 2: Get user's profile data
+      // Get user's profile data
       const profileResponse = await fetch("https://api.spotify.com/v1/me", {
         headers: {
-          Authorization: `Bearer ${tokenData.access_token}`
+          Authorization: `Bearer ${accessToken}`
         }
       });
 
@@ -376,52 +469,26 @@ const getUserSpotifyProfile = tool({
  * This tool exchanges the auth code for an access token and fetches top tracks
  */
 const getUserTopTracks = tool({
-  description: "Get user's top Spotify tracks using their authorization code",
+  description: "Get user's top Spotify tracks using token-based authentication",
   inputSchema: z.object({
     authCode: z
       .string()
-      .describe("The authorization code received from Spotify callback")
+      .optional()
+      .describe(
+        "The authorization code (optional if tokens are already stored)"
+      )
   }),
   execute: async ({ authCode }) => {
     try {
-      // Step 1: Exchange authorization code for access token
-      const tokenResponse = await fetch(
-        "https://accounts.spotify.com/api/token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: new URLSearchParams({
-            grant_type: "authorization_code",
-            code: authCode,
-            redirect_uri:
-              "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback",
-            client_id: process.env.SPOTIFY_CLIENT_ID || "",
-            client_secret: process.env.SPOTIFY_CLIENT_SECRET || ""
-          })
-        }
-      );
+      // Get access token (will use stored token or exchange code)
+      const accessToken = await getAccessToken(authCode);
 
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        return `Failed to exchange authorization code for access token. Error: ${tokenResponse.status} - ${errorText}`;
-      }
-
-      const tokenData = (await tokenResponse.json()) as {
-        access_token: string;
-        token_type: string;
-        expires_in: number;
-        refresh_token: string;
-        scope: string;
-      };
-
-      // Step 2: Get user's top tracks
+      // Get user's top tracks
       const tracksResponse = await fetch(
         "https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=10",
         {
           headers: {
-            Authorization: `Bearer ${tokenData.access_token}`
+            Authorization: `Bearer ${accessToken}`
           }
         }
       );
@@ -469,52 +536,26 @@ const getUserTopTracks = tool({
  */
 const getUserRecentlyPlayed = tool({
   description:
-    "Get user's recently played Spotify tracks using their authorization code",
+    "Get user's recently played Spotify tracks using token-based authentication",
   inputSchema: z.object({
     authCode: z
       .string()
-      .describe("The authorization code received from Spotify callback")
+      .optional()
+      .describe(
+        "The authorization code (optional if tokens are already stored)"
+      )
   }),
   execute: async ({ authCode }) => {
     try {
-      // Step 1: Exchange authorization code for access token
-      const tokenResponse = await fetch(
-        "https://accounts.spotify.com/api/token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: new URLSearchParams({
-            grant_type: "authorization_code",
-            code: authCode,
-            redirect_uri:
-              "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback",
-            client_id: process.env.SPOTIFY_CLIENT_ID || "",
-            client_secret: process.env.SPOTIFY_CLIENT_SECRET || ""
-          })
-        }
-      );
+      // Get access token (will use stored token or exchange code)
+      const accessToken = await getAccessToken(authCode);
 
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        return `Failed to exchange authorization code for access token. Error: ${tokenResponse.status} - ${errorText}`;
-      }
-
-      const tokenData = (await tokenResponse.json()) as {
-        access_token: string;
-        token_type: string;
-        expires_in: number;
-        refresh_token: string;
-        scope: string;
-      };
-
-      // Step 2: Get user's recently played tracks
+      // Get user's recently played tracks
       const recentResponse = await fetch(
         "https://api.spotify.com/v1/me/player/recently-played?limit=20",
         {
           headers: {
-            Authorization: `Bearer ${tokenData.access_token}`
+            Authorization: `Bearer ${accessToken}`
           }
         }
       );
