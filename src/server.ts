@@ -72,18 +72,28 @@ export class Chat extends AIChatAgent<Env> {
 - Local time in different locations  
 - Scheduling tasks (one-time, delayed, or recurring)
 - Searching for Spotify artist information
+- Searching for Spotify tracks and songs
 - Providing Spotify login link for user authentication
 - Getting user's top Spotify artists using authorization code
+- Getting user's top Spotify tracks using authorization code
+- Getting user's recently played tracks using authorization code
+- Getting user's Spotify profile data using authorization code
 - Checking if user is logged in to Spotify
 
 ${getSchedulePrompt({ date: new Date() })}
 
 If the user asks to schedule a task, use the schedule tool to schedule the task.
-If the user asks about music artists or wants to search Spotify, use the searchSpotifyArtist tool.
+If the user asks about music artists or wants to search Spotify artists, use the searchSpotifyArtist tool.
+If the user asks about songs, tracks, or wants to search for music, use the searchSpotifyTracks tool.
 If the user asks "what are my top artists", "show my top artists", "my top Spotify artists", or similar questions about their personal Spotify data, use the loginToSpotify tool first to provide the login link.
+If the user asks "what are my top tracks", "show my top songs", "my top Spotify tracks", or similar questions about their personal Spotify tracks, use the loginToSpotify tool first to provide the login link.
+If the user asks "what did I recently play", "my recent tracks", "recently played", or similar questions about their recent listening history, use the loginToSpotify tool first to provide the login link.
 If the user asks about Spotify login, authentication, or wants to access their Spotify data, use the loginToSpotify tool first.
 If the user asks "am I logged in?", "am I login?", "check my login status", or similar questions about their Spotify login status, use the checkSpotifyLogin tool.
 If the user provides an authorization code from Spotify callback and wants to see their top artists, use the getUserTopArtists tool with the authorization code.
+If the user provides an authorization code from Spotify callback and wants to see their top tracks, use the getUserTopTracks tool with the authorization code.
+If the user provides an authorization code from Spotify callback and wants to see their recently played tracks, use the getUserRecentlyPlayed tool with the authorization code.
+If the user provides an authorization code from Spotify callback and wants to see their profile data, use the getUserSpotifyProfile tool with the authorization code.
 `,
 
           messages: convertToModelMessages(processedMessages),

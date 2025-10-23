@@ -28,8 +28,7 @@ const loginToSpotify = tool({
     "Provide user with Spotify login link to authenticate and access their Spotify data",
   inputSchema: z.object({}),
   execute: async () => {
-    const spotifyLoginUrl =
-      "https://accounts.spotify.com/authorize?client_id=cd538c6a2189488fadeaf4a79ced9f70&response_type=code&redirect_uri=https://damp-block-d4f7.nathanaela-2002.workers.dev/callback&scope=user-top-read&show_dialog=true";
+    const spotifyLoginUrl = `https://accounts.spotify.com/authorize?client_id=${process.env.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=https://damp-block-d4f7.nathanaela-2002.workers.dev/callback&scope=user-top-read&show_dialog=true`;
     return `To access your Spotify data, please login to Spotify first. 
 
 **Note**: This will redirect to https://damp-block-d4f7.nathanaela-2002.workers.dev/callback.
@@ -64,8 +63,8 @@ const getUserTopArtists = tool({
             code: authCode,
             redirect_uri:
               "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback",
-            client_id: "cd538c6a2189488fadeaf4a79ced9f70",
-            client_secret: "d07e8f67179e495482f6120ab75fca2c"
+            client_id: process.env.SPOTIFY_CLIENT_ID || "",
+            client_secret: process.env.SPOTIFY_CLIENT_SECRET || ""
           })
         }
       );
@@ -285,6 +284,403 @@ const cancelScheduledTask = tool({
 });
 
 /**
+ * Get user's Spotify profile data using authorization code
+ * This tool exchanges the auth code for an access token and fetches user profile
+ */
+const getUserSpotifyProfile = tool({
+  description: "Get user's Spotify profile data using their authorization code",
+  inputSchema: z.object({
+    authCode: z
+      .string()
+      .describe("The authorization code received from Spotify callback")
+  }),
+  execute: async ({ authCode }) => {
+    try {
+      // Step 1: Exchange authorization code for access token
+      const tokenResponse = await fetch(
+        "https://accounts.spotify.com/api/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            code: authCode,
+            redirect_uri:
+              "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback",
+            client_id: process.env.SPOTIFY_CLIENT_ID || "",
+            client_secret: process.env.SPOTIFY_CLIENT_SECRET || ""
+          })
+        }
+      );
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        return `Failed to exchange authorization code for access token. Error: ${tokenResponse.status} - ${errorText}`;
+      }
+
+      const tokenData = (await tokenResponse.json()) as {
+        access_token: string;
+        token_type: string;
+        expires_in: number;
+        refresh_token: string;
+        scope: string;
+      };
+
+      // Step 2: Get user's profile data
+      const profileResponse = await fetch("https://api.spotify.com/v1/me", {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`
+        }
+      });
+
+      if (!profileResponse.ok) {
+        const errorText = await profileResponse.text();
+        return `Failed to get user profile. Error: ${profileResponse.status} - ${errorText}`;
+      }
+
+      const profileData = (await profileResponse.json()) as {
+        id: string;
+        display_name: string;
+        email: string;
+        country: string;
+        followers: { total: number };
+        images: Array<{ url: string; width: number; height: number }>;
+        product: string;
+        external_urls: { spotify: string };
+      };
+
+      // Format the response
+      let result = "👤 **Your Spotify Profile:**\n\n";
+      result += `**Name**: ${profileData.display_name}\n`;
+      result += `**Email**: ${profileData.email}\n`;
+      result += `**Country**: ${profileData.country}\n`;
+      result += `**Followers**: ${profileData.followers.total.toLocaleString()}\n`;
+      result += `**Account Type**: ${profileData.product}\n`;
+      result += `**Profile URL**: [View on Spotify](${profileData.external_urls.spotify})\n\n`;
+
+      if (profileData.images.length > 0) {
+        result += `**Profile Picture**: ![Profile](${profileData.images[0].url})\n`;
+      }
+
+      return result;
+    } catch (error) {
+      return `Error getting your Spotify profile: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+});
+
+/**
+ * Get user's top Spotify tracks using authorization code
+ * This tool exchanges the auth code for an access token and fetches top tracks
+ */
+const getUserTopTracks = tool({
+  description: "Get user's top Spotify tracks using their authorization code",
+  inputSchema: z.object({
+    authCode: z
+      .string()
+      .describe("The authorization code received from Spotify callback")
+  }),
+  execute: async ({ authCode }) => {
+    try {
+      // Step 1: Exchange authorization code for access token
+      const tokenResponse = await fetch(
+        "https://accounts.spotify.com/api/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            code: authCode,
+            redirect_uri:
+              "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback",
+            client_id: process.env.SPOTIFY_CLIENT_ID || "",
+            client_secret: process.env.SPOTIFY_CLIENT_SECRET || ""
+          })
+        }
+      );
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        return `Failed to exchange authorization code for access token. Error: ${tokenResponse.status} - ${errorText}`;
+      }
+
+      const tokenData = (await tokenResponse.json()) as {
+        access_token: string;
+        token_type: string;
+        expires_in: number;
+        refresh_token: string;
+        scope: string;
+      };
+
+      // Step 2: Get user's top tracks
+      const tracksResponse = await fetch(
+        "https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=10",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`
+          }
+        }
+      );
+
+      if (!tracksResponse.ok) {
+        const errorText = await tracksResponse.text();
+        return `Failed to get top tracks. Error: ${tracksResponse.status} - ${errorText}`;
+      }
+
+      const tracksData = (await tracksResponse.json()) as {
+        items: Array<{
+          name: string;
+          artists: Array<{ name: string }>;
+          album: { name: string; images: Array<{ url: string }> };
+          popularity: number;
+          external_urls: { spotify: string };
+          duration_ms: number;
+        }>;
+      };
+
+      // Format the response
+      let result = "🎵 **Your Top 10 Spotify Tracks (Last 4 weeks):**\n\n";
+
+      tracksData.items.forEach((track, index) => {
+        const duration = Math.floor(track.duration_ms / 1000 / 60);
+        const seconds = Math.floor((track.duration_ms / 1000) % 60);
+        result += `${index + 1}. **${track.name}**\n`;
+        result += `   - Artist: ${track.artists.map((a) => a.name).join(", ")}\n`;
+        result += `   - Album: ${track.album.name}\n`;
+        result += `   - Duration: ${duration}:${seconds.toString().padStart(2, "0")}\n`;
+        result += `   - Popularity: ${track.popularity}/100\n`;
+        result += `   - [Listen on Spotify](${track.external_urls.spotify})\n\n`;
+      });
+
+      return result;
+    } catch (error) {
+      return `Error getting your top tracks: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+});
+
+/**
+ * Get user's recently played tracks using authorization code
+ * This tool exchanges the auth code for an access token and fetches recently played tracks
+ */
+const getUserRecentlyPlayed = tool({
+  description:
+    "Get user's recently played Spotify tracks using their authorization code",
+  inputSchema: z.object({
+    authCode: z
+      .string()
+      .describe("The authorization code received from Spotify callback")
+  }),
+  execute: async ({ authCode }) => {
+    try {
+      // Step 1: Exchange authorization code for access token
+      const tokenResponse = await fetch(
+        "https://accounts.spotify.com/api/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            code: authCode,
+            redirect_uri:
+              "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback",
+            client_id: process.env.SPOTIFY_CLIENT_ID || "",
+            client_secret: process.env.SPOTIFY_CLIENT_SECRET || ""
+          })
+        }
+      );
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        return `Failed to exchange authorization code for access token. Error: ${tokenResponse.status} - ${errorText}`;
+      }
+
+      const tokenData = (await tokenResponse.json()) as {
+        access_token: string;
+        token_type: string;
+        expires_in: number;
+        refresh_token: string;
+        scope: string;
+      };
+
+      // Step 2: Get user's recently played tracks
+      const recentResponse = await fetch(
+        "https://api.spotify.com/v1/me/player/recently-played?limit=20",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`
+          }
+        }
+      );
+
+      if (!recentResponse.ok) {
+        const errorText = await recentResponse.text();
+        return `Failed to get recently played tracks. Error: ${recentResponse.status} - ${errorText}`;
+      }
+
+      const recentData = (await recentResponse.json()) as {
+        items: Array<{
+          track: {
+            name: string;
+            artists: Array<{ name: string }>;
+            album: { name: string; images: Array<{ url: string }> };
+            external_urls: { spotify: string };
+            duration_ms: number;
+          };
+          played_at: string;
+        }>;
+      };
+
+      // Format the response
+      let result = "🕒 **Your Recently Played Tracks:**\n\n";
+
+      recentData.items.forEach((item, index) => {
+        const track = item.track;
+        const playedAt = new Date(item.played_at).toLocaleString();
+        const duration = Math.floor(track.duration_ms / 1000 / 60);
+        const seconds = Math.floor((track.duration_ms / 1000) % 60);
+
+        result += `${index + 1}. **${track.name}**\n`;
+        result += `   - Artist: ${track.artists.map((a) => a.name).join(", ")}\n`;
+        result += `   - Album: ${track.album.name}\n`;
+        result += `   - Duration: ${duration}:${seconds.toString().padStart(2, "0")}\n`;
+        result += `   - Played: ${playedAt}\n`;
+        result += `   - [Listen on Spotify](${track.external_urls.spotify})\n\n`;
+      });
+
+      return result;
+    } catch (error) {
+      return `Error getting your recently played tracks: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+});
+
+/**
+ * Search for Spotify tracks and artists
+ * This tool searches for tracks and artists and returns detailed information
+ */
+const searchSpotifyTracks = tool({
+  description: "Search for Spotify tracks and artists by query",
+  inputSchema: z.object({
+    query: z.string().describe("The search query (song name, artist, etc.)")
+  }),
+  execute: async ({ query }) => {
+    try {
+      // First get an access token using client credentials
+      const tokenResponse = await fetch(
+        "https://accounts.spotify.com/api/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({
+            grant_type: "client_credentials",
+            client_id: process.env.SPOTIFY_CLIENT_ID || "",
+            client_secret: process.env.SPOTIFY_CLIENT_SECRET || ""
+          })
+        }
+      );
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        return `Failed to get access token. Error: ${tokenResponse.status} - ${errorText}`;
+      }
+
+      const tokenData = (await tokenResponse.json()) as {
+        access_token: string;
+        token_type: string;
+        expires_in: number;
+      };
+
+      const accessToken = tokenData.access_token;
+
+      // Search for tracks and artists
+      const searchResponse = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,artist&limit=10`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      if (!searchResponse.ok) {
+        const errorText = await searchResponse.text();
+        return `Failed to search for tracks and artists. Error: ${searchResponse.status} - ${errorText}`;
+      }
+
+      const searchData = (await searchResponse.json()) as {
+        tracks: {
+          items: Array<{
+            name: string;
+            artists: Array<{ name: string }>;
+            album: { name: string; images: Array<{ url: string }> };
+            popularity: number;
+            external_urls: { spotify: string };
+            duration_ms: number;
+          }>;
+        };
+        artists: {
+          items: Array<{
+            name: string;
+            popularity: number;
+            genres: string[];
+            external_urls: { spotify: string };
+            images: Array<{ url: string }>;
+          }>;
+        };
+      };
+
+      let result = `🔍 **Search Results for "${query}":**\n\n`;
+
+      // Display tracks
+      if (searchData.tracks.items.length > 0) {
+        result += "**🎵 Tracks:**\n";
+        searchData.tracks.items.forEach((track, index) => {
+          const duration = Math.floor(track.duration_ms / 1000 / 60);
+          const seconds = Math.floor((track.duration_ms / 1000) % 60);
+          result += `${index + 1}. **${track.name}**\n`;
+          result += `   - Artist: ${track.artists.map((a) => a.name).join(", ")}\n`;
+          result += `   - Album: ${track.album.name}\n`;
+          result += `   - Duration: ${duration}:${seconds.toString().padStart(2, "0")}\n`;
+          result += `   - Popularity: ${track.popularity}/100\n`;
+          result += `   - [Listen on Spotify](${track.external_urls.spotify})\n\n`;
+        });
+      }
+
+      // Display artists
+      if (searchData.artists.items.length > 0) {
+        result += "**👤 Artists:**\n";
+        searchData.artists.items.forEach((artist, index) => {
+          result += `${index + 1}. **${artist.name}**\n`;
+          result += `   - Popularity: ${artist.popularity}/100\n`;
+          result += `   - Genres: ${artist.genres.slice(0, 3).join(", ")}\n`;
+          result += `   - [View on Spotify](${artist.external_urls.spotify})\n\n`;
+        });
+      }
+
+      if (
+        searchData.tracks.items.length === 0 &&
+        searchData.artists.items.length === 0
+      ) {
+        return `No tracks or artists found for "${query}"`;
+      }
+
+      return result;
+    } catch (error) {
+      return `Error searching for tracks and artists: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+});
+
+/**
  * Export all available tools
  * These will be provided to the AI model to describe available capabilities
  */
@@ -296,6 +692,10 @@ export const tools = {
   cancelScheduledTask,
   loginToSpotify,
   getUserTopArtists,
+  getUserSpotifyProfile,
+  getUserTopTracks,
+  getUserRecentlyPlayed,
+  searchSpotifyTracks,
   checkSpotifyLogin,
   searchSpotifyArtist
 } satisfies ToolSet;
