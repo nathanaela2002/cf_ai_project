@@ -296,10 +296,7 @@ export default function Chat() {
                             );
                           }
 
-                          if (
-                            isToolUIPart(part) &&
-                            m.role === "assistant"
-                          ) {
+                          if (isToolUIPart(part) && m.role === "assistant") {
                             const toolCallId = part.toolCallId;
                             const toolName = part.type.replace("tool-", "");
                             const needsConfirmation =

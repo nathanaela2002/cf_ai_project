@@ -65,12 +65,6 @@ export class Chat extends AIChatAgent<Env> {
           executions
         });
 
-        // Simple test: Log every user message to confirm the chat system is working
-        const lastUserMessage = cleanedMessages.find(msg => msg.role === "user");
-        if (lastUserMessage?.parts?.[0]?.type === "text") {
-          const userText = lastUserMessage.parts[0].text;
-        }
-
         const result = streamText({
           system: `You are a helpful assistant that can do various tasks including:
 
@@ -135,15 +129,20 @@ If the user provides an authorization code from Spotify callback and wants to se
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext) {
     const url = new URL(request.url);
-    
+
     if (url.pathname === "/callback") {
       const authCode = url.searchParams.get("code");
       if (authCode) {
         // Store the authorization code in KV storage for persistence across Worker instances
-        await env.AUTH_CODES.put("latestAuthCode", authCode, { expirationTtl: 600 }); // 10 minutes
+        await env.AUTH_CODES.put("latestAuthCode", authCode, {
+          expirationTtl: 600
+        }); // 10 minutes
       }
-      
-      return new Response("Spotify authentication successful! Authorization code received: " + authCode);
+
+      return new Response(
+        "Spotify authentication successful! Authorization code received: " +
+          authCode
+      );
     }
 
     if (url.pathname === "/get-auth-code") {
@@ -151,12 +150,17 @@ export default {
       if (storedCode) {
         return new Response(JSON.stringify({ authCode: storedCode }));
       } else {
-        return new Response(JSON.stringify({ error: "No authorization code found" }), { status: 404 });
+        return new Response(
+          JSON.stringify({ error: "No authorization code found" }),
+          { status: 404 }
+        );
       }
     }
 
     if (url.pathname === "/test") {
-      return new Response("Test endpoint is working! Visit /callback?code=test123 to test the callback.");
+      return new Response(
+        "Test endpoint is working! Visit /callback?code=test123 to test the callback."
+      );
     }
 
     if (url.pathname === "/check-open-ai-key") {
