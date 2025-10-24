@@ -149,10 +149,9 @@ export default {
         }); // 10 minutes
       }
 
-      return new Response(
-        "Spotify authentication successful! Authorization code received: " +
-          authCode
-      );
+      // Redirect back to the app with auth success flag
+      // This will trigger the auto-send message in the React app
+      return Response.redirect("http://localhost:5173/?auth=success", 302);
     }
 
     if (url.pathname === "/get-auth-code") {

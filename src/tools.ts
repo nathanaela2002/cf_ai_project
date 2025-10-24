@@ -14,7 +14,8 @@ async function getAccessToken(authCode?: string): Promise<string> {
   try {
     // If no authCode provided, try to get it from stored location
     if (!authCode) {
-      const authCodeUrl = "https://damp-block-d4f7.nathanaela-2002.workers.dev/get-auth-code";
+      const authCodeUrl =
+        "https://damp-block-d4f7.nathanaela-2002.workers.dev/get-auth-code";
       const authResponse = await fetch(authCodeUrl);
       if (authResponse.ok) {
         const authData = (await authResponse.json()) as { authCode: string };

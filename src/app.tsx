@@ -115,6 +115,30 @@ export default function Chat() {
     agent
   });
 
+  // Auto-send message when user returns from Spotify authentication
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authSuccess = urlParams.get("auth") === "success";
+
+    if (authSuccess) {
+      // Clear the flag from URL so it doesn't repeat
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Auto-send message to continue the task
+      const autoMessage = "Continue the task";
+
+      sendMessage(
+        {
+          role: "user",
+          parts: [{ type: "text", text: autoMessage }]
+        },
+        {
+          body: { autoTriggered: true }
+        }
+      );
+    }
+  }, [sendMessage]);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     agentMessages.length > 0 && scrollToBottom();
