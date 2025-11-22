@@ -4,16 +4,20 @@
 .markdown-body table {
   @apply w-full border-collapse my-4 text-[0.95em];
 }
+
 .markdown-body th,
 .markdown-body td {
   @apply border border-neutral-300 dark:border-neutral-700 px-3 py-2 text-left;
 }
+
 .markdown-body th {
   @apply bg-neutral-100 dark:bg-neutral-800 font-semibold dark:text-neutral-200;
 }
+
 .markdown-body tr {
   @apply dark:text-neutral-300;
 }
+
 .markdown-body tr:nth-child(even) {
   @apply bg-neutral-50 dark:bg-neutral-850;
 }
@@ -39,7 +43,9 @@
 
   /* Easings & transitions */
   --ease-bounce: cubic-bezier(0.2, 0, 0, 1.5);
-  --default-transition-duration: 100ms /* snappier than default 150ms */;
+  --default-transition-duration: 100ms
+    /* snappier than default 150ms */
+  ;
 
   /* Animation */
   --animate-refresh: refresh 0.5s ease-in-out infinite;
@@ -50,20 +56,32 @@
 
   --color-neutral-50: oklch(0.985 0 0);
   --color-neutral-100: oklch(0.97 0 0);
-  --color-neutral-150: oklch(0.96 0 0) /*new */;
+  --color-neutral-150: oklch(0.96 0 0)
+    /*new */
+  ;
   --color-neutral-200: oklch(0.922 0 0);
-  --color-neutral-250: oklch(0.9 0 0) /* new */;
+  --color-neutral-250: oklch(0.9 0 0)
+    /* new */
+  ;
   --color-neutral-300: oklch(0.87 0 0);
   --color-neutral-400: oklch(0.708 0 0);
-  --color-neutral-450: oklch(0.62 0 0) /* new */;
+  --color-neutral-450: oklch(0.62 0 0)
+    /* new */
+  ;
   --color-neutral-500: oklch(0.556 0 0);
   --color-neutral-600: oklch(0.439 0 0);
   --color-neutral-700: oklch(0.371 0 0);
-  --color-neutral-750: oklch(0.31 0 0) /* new */;
+  --color-neutral-750: oklch(0.31 0 0)
+    /* new */
+  ;
   --color-neutral-800: oklch(0.269 0 0);
-  --color-neutral-850: oklch(0.23 0 0) /* new */;
+  --color-neutral-850: oklch(0.23 0 0)
+    /* new */
+  ;
   --color-neutral-900: oklch(0.205 0 0);
-  --color-neutral-925: oklch(0.175 0 0) /* new */;
+  --color-neutral-925: oklch(0.175 0 0)
+    /* new */
+  ;
   --color-neutral-950: oklch(0.145 0 0);
 
   --color-red-650: oklch(0.55 0.238 27.4);
@@ -263,12 +281,15 @@
 /* Database card animation */
 .db-card {
   animation: db-card-animation 3s linear infinite;
-  animation-play-state: paused; /* pause while group is not hovered */
-  stroke-dasharray: 100; /* length of each dash */
+  animation-play-state: paused;
+  /* pause while group is not hovered */
+  stroke-dasharray: 100;
+  /* length of each dash */
 
   &:is(:where(.group):hover *) {
     @media (hover: hover) {
-      animation-play-state: running; /* play while group is hovered */
+      animation-play-state: running;
+      /* play while group is hovered */
     }
   }
 }
@@ -277,9 +298,11 @@
   0% {
     stroke-dashoffset: -200;
   }
+
   50% {
     stroke-dashoffset: 0;
   }
+
   100% {
     stroke-dashoffset: 200;
   }

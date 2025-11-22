@@ -262,9 +262,8 @@ export default function Chat() {
                   className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`flex gap-2 max-w-[85%] ${
-                      isUser ? "flex-row-reverse" : "flex-row"
-                    }`}
+                    className={`flex gap-2 max-w-[85%] ${isUser ? "flex-row-reverse" : "flex-row"
+                      }`}
                   >
                     {showAvatar && !isUser ? (
                       <Avatar username={"AI"} />
@@ -280,23 +279,21 @@ export default function Chat() {
                               // biome-ignore lint/suspicious/noArrayIndexKey: immutable index
                               <div key={i}>
                                 <Card
-                                  className={`p-3 rounded-md bg-neutral-100 dark:bg-neutral-900 ${
-                                    isUser
+                                  className={`p-3 rounded-md bg-neutral-100 dark:bg-neutral-900 ${isUser
                                       ? "rounded-br-none"
                                       : "rounded-bl-none border-assistant-border"
-                                  } ${
-                                    part.text.startsWith("scheduled message")
+                                    } ${part.text.startsWith("scheduled message")
                                       ? "border-accent/50"
                                       : ""
-                                  } relative`}
+                                    } relative`}
                                 >
                                   {part.text.startsWith(
                                     "scheduled message"
                                   ) && (
-                                    <span className="absolute -top-3 -left-2 text-base">
-                                      🕒
-                                    </span>
-                                  )}
+                                      <span className="absolute -top-3 -left-2 text-base">
+                                        🕒
+                                      </span>
+                                    )}
                                   <MemoizedMarkdown
                                     id={`${m.id}-${i}`}
                                     content={part.text.replace(
@@ -306,9 +303,8 @@ export default function Chat() {
                                   />
                                 </Card>
                                 <p
-                                  className={`text-xs text-muted-foreground mt-1 ${
-                                    isUser ? "text-right" : "text-left"
-                                  }`}
+                                  className={`text-xs text-muted-foreground mt-1 ${isUser ? "text-right" : "text-left"
+                                    }`}
                                 >
                                   {formatTime(
                                     m.metadata?.createdAt
