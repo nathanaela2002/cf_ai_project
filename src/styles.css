@@ -130,206 +130,121 @@
 
   /* Focus colors */
   --color-ob-focus: var(--color-blue-400);
+  /* Vibrant Colors */
+  --color-electric-blue: #2563eb;
+  --color-vibrant-purple: #7c3aed;
+
+  /* Liquid Glass Variables */
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --glass-blur: 12px;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  --gradient-bg: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
 }
 
-.dark {
-  /* Component colors */
-
-  /* Base colors */
-  --color-ob-base-100: var(--color-neutral-950);
-  --color-ob-base-200: var(--color-neutral-900);
-  --color-ob-base-300: var(--color-neutral-850);
-  --color-ob-base-400: var(--color-neutral-800);
-  --color-ob-base-500: var(--color-neutral-750);
-  --color-ob-base-1000: var(--color-neutral-50);
-
-  --color-ob-border: var(--color-neutral-800);
-  --color-ob-border-active: var(--color-neutral-700);
-
-  /* Text colors */
-  --text-color-ob-base-100: var(--color-neutral-500);
-  --text-color-ob-base-200: var(--color-neutral-400);
-  --text-color-ob-base-300: var(--color-neutral-50);
-  --text-color-ob-destructive: var(--color-red-400);
-  --text-color-ob-inverted: var(--color-neutral-900);
-
-  /* ob-btn */
-  --color-ob-btn-primary-bg: var(--color-neutral-300);
-  --color-ob-btn-primary-bg-hover: var(--color-neutral-250);
-  --color-ob-btn-primary-border: var(--color-neutral-100);
-  --color-ob-btn-primary-border-hover: var(--color-white);
-
-  --color-ob-btn-secondary-bg: var(--color-neutral-900);
-  --color-ob-btn-secondary-bg-hover: var(--color-neutral-850);
-  --color-ob-btn-secondary-border: var(--color-neutral-800);
-  --color-ob-btn-secondary-border-hover: var(--color-neutral-750);
-
-  --color-ob-btn-ghost-bg-hover: var(--color-neutral-850);
-
-  --color-ob-btn-destructive-bg: var(--color-red-800);
-  --color-ob-btn-destructive-bg-hover: var(--color-red-750);
-  --color-ob-btn-destructive-border: var(--color-red-700);
-  --color-ob-btn-destructive-border-hover: var(--color-red-600);
-
-  /* Focus colors */
-  --color-ob-focus: var(--color-blue-800);
+/* Liquid Glass Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
 }
 
-.btn {
-  &.btn-primary {
-    @apply border-ob-btn-primary-border bg-ob-btn-primary-bg text-ob-inverted shadow-xs;
-
-    @variant interactive {
-      @apply not-disabled:hover:border-ob-btn-primary-border-hover not-disabled:hover:bg-ob-btn-primary-bg-hover;
-
-      @variant toggle {
-        @apply not-disabled:border-ob-btn-primary-border-hover not-disabled:bg-ob-btn-primary-bg-hover;
-      }
-    }
-  }
-
-  &.btn-secondary {
-    @apply border-ob-btn-secondary-border bg-ob-btn-secondary-bg text-ob-base-300 shadow-xs;
-
-    @variant interactive {
-      @apply not-disabled:hover:border-ob-btn-secondary-border-hover not-disabled:hover:bg-ob-btn-secondary-bg-hover;
-
-      @variant toggle {
-        @apply not-disabled:border-ob-btn-secondary-border-hover not-disabled:bg-ob-btn-secondary-bg-hover;
-      }
-    }
-  }
-
-  &.btn-ghost {
-    @apply text-ob-base-300 border-transparent bg-transparent;
-
-    @variant interactive {
-      @apply not-disabled:hover:bg-ob-btn-ghost-bg-hover;
-
-      @variant toggle {
-        @apply not-disabled:bg-ob-btn-ghost-bg-hover;
-      }
-    }
-  }
-
-  &.btn-destructive {
-    @apply border-ob-btn-destructive-border bg-ob-btn-destructive-bg text-white;
-
-    @variant interactive {
-      @apply not-disabled:hover:bg-ob-btn-destructive-bg-hover not-disabled:hover:border-ob-btn-destructive-border-hover;
-
-      @variant toggle {
-        @apply not-disabled:bg-ob-btn-destructive-bg-hover not-disabled:border-ob-btn-destructive-border-hover;
-      }
-    }
-  }
-
-  @apply border;
-
-  @variant interactive {
-    @apply cursor-pointer transition-colors;
-  }
+.glass-bubble-user {
+  background: var(--gradient-primary);
+  @apply text-white shadow-lg border border-white/20;
+  backdrop-filter: blur(4px);
 }
 
-/* Use for elements that require a tab-focus state (most elements) */
-.add-focus {
-  @apply focus-visible:ring-ob-focus outline-none focus:opacity-100 focus-visible:ring-1 *:in-focus:opacity-100;
+.glass-bubble-ai {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.05);
+  @apply text-neutral-800;
 }
 
-/* Use for elements that require a disabled state */
-.add-disable {
-  @apply disabled:text-ob-base-100 disabled:cursor-not-allowed;
+.glass-input {
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 20px 0 rgba(31, 38, 135, 0.08);
 }
 
-/* Use size variants for elements that need to match certain heights */
-.add-size-sm {
-  @apply h-6.5 rounded px-2 text-sm;
-
-  @variant square {
-    @apply flex size-6.5 items-center justify-center px-0;
-  }
-
-  @variant circular {
-    @apply flex size-6.5 items-center justify-center rounded-full px-0;
-  }
+/* Liquid Button Styles */
+.btn-liquid {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px 0 rgba(31, 38, 135, 0.1);
+  transition: all 0.3s ease;
 }
 
-.add-size-md {
-  @apply h-8 rounded-md px-2.5 text-base;
-
-  @variant square {
-    @apply flex size-8 items-center justify-center px-0;
-  }
-
-  @variant circular {
-    @apply flex size-8 items-center justify-center rounded-full px-0;
-  }
+.btn-liquid:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px 0 rgba(31, 38, 135, 0.15);
 }
 
-.add-size-base {
-  @apply h-9 rounded-md px-3 text-base;
-
-  @variant square {
-    @apply flex size-9 items-center justify-center px-0;
-  }
-
-  @variant circular {
-    @apply flex size-9 items-center justify-center rounded-full px-0;
-  }
+/* Fix icon centering in circular buttons */
+.btn-liquid.rounded-full svg {
+  display: block;
+  margin-left: 1px; /* Slight shift to the right for better visual centering */
 }
 
-/* Database card animation */
-.db-card {
-  animation: db-card-animation 3s linear infinite;
-  animation-play-state: paused;
-  /* pause while group is not hovered */
-  stroke-dasharray: 100;
-  /* length of each dash */
+/* Animations */
+@keyframes float-slow {
 
-  &:is(:where(.group):hover *) {
-    @media (hover: hover) {
-      animation-play-state: running;
-      /* play while group is hovered */
-    }
-  }
-}
-
-@keyframes db-card-animation {
-  0% {
-    stroke-dashoffset: -200;
+  0%,
+  100% {
+    transform: translateY(0px);
   }
 
   50% {
-    stroke-dashoffset: 0;
-  }
-
-  100% {
-    stroke-dashoffset: 200;
+    transform: translateY(-10px);
   }
 }
 
-/* SVG filters */
-.pixelate {
-  filter: url(#pixelate);
+.animate-float {
+  animation: float-slow 6s ease-in-out infinite;
 }
 
-/* Ripple filter */
-.ripple {
-  filter: url(#ripple);
-}
+.dark {
+  /* Dark mode overrides for glass */
+  --glass-bg: rgba(20, 20, 20, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --gradient-bg: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
 
-.float {
-  animation: float 5s linear infinite alternate;
-}
-
-@keyframes float {
-  to {
-    transform: translate(5px, 15px);
+  .glass-panel {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
-}
 
-@keyframes refresh {
-  to {
-    transform: rotate(360deg) scale(0.9);
+  .glass-bubble-ai {
+    background: rgba(30, 30, 30, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    @apply text-neutral-100;
+  }
+
+  .glass-input {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    @apply text-white;
+  }
+
+  .btn-liquid {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-liquid:hover {
+    background: rgba(255, 255, 255, 0.15);
   }
 }

@@ -21,7 +21,6 @@ import { tools, executions } from "./tools";
 // KV storage for authorization codes
 interface Env {
   AUTH_CODES: KVNamespace;
-  AI: Ai;
 }
 
 const model = openai("gpt-4o-2024-11-20");
@@ -92,12 +91,11 @@ AUTHENTICATION FLOW:
 
 MOOD-BASED PLAYLIST WORKFLOW:
 When user requests a mood-based playlist (e.g., "make me something chill", "I feel nostalgic", "hype playlist for gym"):
-1. Use classifyMoodAI to understand the mood from user's query
-2. Use generatePlaylistByMood with the detected mood
+1. Use generatePlaylistByMood with the mood keyword from user's query
    - Set familiarity to "new" if they want discovery
    - Set familiarity to "familiar" if they want their favorites
    - Set familiarity to "mixed" for balance (default)
-3. The tool automatically: fetches user's top artists, finds related artists, searches mood-specific tracks, creates playlist, and adds tracks
+2. The tool automatically: fetches user's top tracks, uses Last.fm to find similar tracks, creates playlist, and adds tracks
 
 PERSONAL STATS & INSIGHTS:
 - getUserTopArtists: Get user's top artists (supports time_range: short_term/medium_term/long_term)
@@ -121,13 +119,13 @@ PLAYLIST OPERATIONS:
 
 TOOL USAGE GUIDELINES:
 - CRITICAL: Focus on MUSICAL FEEL and EMOTIONAL SIMILARITY, NOT literal word matching. When user says "songs like her by JVKE", match the ROMANTIC/EMOTIONAL/CHILL musical characteristics, not songs with "happy" in the title.
-- CRITICAL: When user asks for "songs like [track]", focus on SONG similarity, NOT artist similarity. Limit seed artist to max 2 tracks, prioritize related artists (60%) and genre search (30%). Don't overfit to one artist - ensure diverse mix while matching musical feel.
-- For mood playlists: Use classifyMoodAI (analyzes musical feel) then generatePlaylistByMood (avoids literal word matching)
-- For "songs like [track]": Use findSimilarTracks - it prioritizes related artists and genre search, limits seed artist to 2 tracks max
+- CRITICAL: When user asks for "songs like [track]", use Last.fm crowd-sourced similarity data for best results. All song suggestions use Last.fm for vibe matching.
+- For mood playlists: Use generatePlaylistByMood directly with the mood keyword - it uses Last.fm similarity from user's top tracks
+- For "songs like [track]": Use findSimilarTracks - it uses Last.fm crowd-sourced similarity data
 - For taste questions ("what's my vibe?", "what genres do I like?"): Use summarizeUserTaste
 - For discovery ("find songs like X but new"): Use findSimilarTracks with excludeUserTracks=true
 - For personal stats: Use getUserTopArtists, getUserTopTracks, getUserRecentlyPlayed, getLikedTracks
-- When user says "I feel [mood]" or "make me a [mood] playlist": Use classifyMoodAI (contextual musical analysis) then generatePlaylistByMood
+- When user says "I feel [mood]" or "make me a [mood] playlist": Use generatePlaylistByMood directly with the mood keyword
 - When user asks "what's my taste?", "my listening vibe", "my music style": Use summarizeUserTaste
 - When user wants "songs like [track]" or "create playlist with songs like [track]": 
   1. Use findSimilarTracks to find similar tracks
@@ -148,8 +146,8 @@ If the user asks to see a playlist, view playlist tracks, or get playlist detail
 If the user asks to list all their playlists, use the getUserPlaylists tool.
 If the user asks about their liked songs or saved tracks, use the getLikedTracks tool.
 If the user asks to find similar artists or discover new music like an artist, use the getRelatedArtists tool (needs artist ID).
-If the user wants songs similar to a specific track (e.g., "songs like her by JVKE"), use findSimilarTracks - it matches by MUSICAL FEEL using related artists and characteristics, NOT title keywords.
-If the user wants a mood-based playlist or says they feel a certain way, use classifyMoodAI first (it analyzes musical feel contextually) then generatePlaylistByMood (avoids literal word matching in titles).
+If the user wants songs similar to a specific track (e.g., "songs like her by JVKE"), use findSimilarTracks - it uses Last.fm crowd-sourced similarity data for best vibe matching.
+If the user wants a mood-based playlist or says they feel a certain way, use generatePlaylistByMood directly with the mood keyword - it uses Last.fm similarity from user's top tracks.
 If the user asks about their music taste, listening style, genres, or overall vibe, use the summarizeUserTaste tool.
 If the user asks to create a new playlist, use the createSpotifyPlaylist tool (requires authentication and user ID from profile).
 If the user asks to add songs to a playlist, use the addTracksToPlaylist tool (requires authentication and track URIs in format 'spotify:track:ID').

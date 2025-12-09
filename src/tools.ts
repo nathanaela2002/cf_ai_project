@@ -15,7 +15,7 @@ async function getAccessToken(authCode?: string): Promise<string> {
     // If no authCode provided, try to get it from stored location
     if (!authCode) {
       const authCodeUrl =
-        "https://damp-block-d4f7.nathanaela-2002.workers.dev/get-auth-code";
+        "https://beatsmith.nathanaela-2002.workers.dev/get-auth-code";
       const authResponse = await fetch(authCodeUrl);
       if (authResponse.ok) {
         const authData = (await authResponse.json()) as { authCode: string };
@@ -25,7 +25,7 @@ async function getAccessToken(authCode?: string): Promise<string> {
 
     // First, try to get stored tokens from KV
     const storedTokensUrl =
-      "https://damp-block-d4f7.nathanaela-2002.workers.dev/get-tokens";
+        "https://beatsmith.nathanaela-2002.workers.dev/get-tokens";
     const storedResponse = await fetch(storedTokensUrl);
 
     if (storedResponse.ok) {
@@ -71,7 +71,7 @@ async function getAccessToken(authCode?: string): Promise<string> {
           // Store the new tokens
           const expiresAt = Date.now() + newTokens.expires_in * 1000;
           await fetch(
-            "https://damp-block-d4f7.nathanaela-2002.workers.dev/store-tokens",
+            "https://beatsmith.nathanaela-2002.workers.dev/store-tokens",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -112,7 +112,7 @@ async function getAccessToken(authCode?: string): Promise<string> {
           grant_type: "authorization_code",
           code: authCode,
           redirect_uri:
-            "https://damp-block-d4f7.nathanaela-2002.workers.dev/callback"
+            "https://beatsmith.nathanaela-2002.workers.dev/callback"
         })
       }
     );
@@ -133,7 +133,7 @@ async function getAccessToken(authCode?: string): Promise<string> {
     // Store the tokens for future use
     const expiresAt = Date.now() + tokens.expires_in * 1000;
     await fetch(
-      "https://damp-block-d4f7.nathanaela-2002.workers.dev/store-tokens",
+          "https://beatsmith.nathanaela-2002.workers.dev/store-tokens",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -172,10 +172,10 @@ const loginToSpotify = tool({
     "Provide user with Spotify login link to authenticate and access their Spotify data",
   inputSchema: z.object({}),
   execute: async () => {
-    const spotifyLoginUrl = `https://accounts.spotify.com/authorize?client_id=${process.env.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=https://damp-block-d4f7.nathanaela-2002.workers.dev/callback&scope=user-top-read%20user-read-recently-played%20playlist-modify-public%20playlist-modify-private%20playlist-read-private%20user-library-read%20user-read-email&show_dialog=true`;
+    const spotifyLoginUrl = `https://accounts.spotify.com/authorize?client_id=${process.env.SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=https://beatsmith.nathanaela-2002.workers.dev/callback&scope=user-top-read%20user-read-recently-played%20playlist-modify-public%20playlist-modify-private%20playlist-read-private%20user-library-read%20user-read-email&show_dialog=true`;
     return `To access your Spotify data, please login to Spotify first. 
 
-**Note**: This will redirect to https://damp-block-d4f7.nathanaela-2002.workers.dev/callback.
+**Note**: This will redirect to https://beatsmith.nathanaela-2002.workers.dev/callback.
 
 Click this link to authenticate: ${spotifyLoginUrl}`;
   }
@@ -277,7 +277,7 @@ const checkSpotifyLogin = tool({
 
       // Check if there's a stored authorization code
       const authCodeUrl =
-        "https://damp-block-d4f7.nathanaela-2002.workers.dev/get-auth-code";
+        "https://beatsmith.nathanaela-2002.workers.dev/get-auth-code";
       const response = await fetch(authCodeUrl);
 
       if (!response.ok) {
@@ -1467,20 +1467,6 @@ const getRelatedArtists = tool({
   }
 });
 
-/**
- * Helper function to create track metadata text for embeddings
- * Creates a rich description that captures musical feel, not just keywords
- */
-function createTrackMetadataText(
-  trackName: string,
-  artistName: string,
-  genres: string[] = [],
-  mood: string = ""
-): string {
-  const genreContext = genres.slice(0, 3).join(", ") || "popular music";
-  return `Song: ${trackName} by ${artistName}. Genre: ${genreContext}. Musical mood and feel: ${mood || "contemporary"}. This track has emotional depth, rhythmic qualities, and sonic characteristics that create a specific listening experience.`;
-}
-
 // Helper functions for future embedding-based similarity (ready for Cloudflare Workers AI integration)
 // Currently using related artists + heuristic scoring as the primary method
 // function cosineSimilarity(a: number[], b: number[]): number {
@@ -1496,156 +1482,6 @@ function createTrackMetadataText(
 //   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 // }
 
-/**
- * Classify mood from text using contextual AI reasoning
- * This tool analyzes musical feel, emotional context, and sonic characteristics
- * rather than just matching keywords like "happy" in titles
- */
-const classifyMoodAI = tool({
-  description:
-    "Classify musical mood and emotional feel from text (song titles, artists, genres, or user descriptions). Analyzes CONTEXTUAL musical characteristics, not just literal words. Returns mood categories like romantic, chill, energetic, nostalgic, emotional, etc. Focuses on HOW music FEELS, not what words appear in titles.",
-  inputSchema: z.object({
-    text: z
-      .string()
-      .describe(
-        "Text to classify - can be song info like 'her by JVKE' or 'The Weeknd - Save Your Tears (pop, synthwave)' or mood descriptions like 'chill study music' or 'emotional romantic pop'"
-      ),
-    context: z
-      .string()
-      .optional()
-      .describe(
-        "Additional context about the musical feel (e.g., 'soft romantic pop', 'chill synths', 'emotional lyrics')"
-      )
-  }),
-  execute: async ({ text, context }) => {
-    try {
-      // Enhanced mood classification focused on MUSICAL FEEL, not literal words
-      // Maps musical characteristics to mood categories
-      const musicalFeelMoods: Record<
-        string,
-        { keywords: string[]; descriptors: string[]; genres?: string[] }
-      > = {
-        romantic: {
-          keywords: ["love", "heart", "intimate", "tender", "soft"],
-          descriptors: [
-            "emotionally intimate",
-            "gentle and soft",
-            "romantic atmosphere",
-            "sentimental",
-            "affectionate"
-          ],
-          genres: ["r&b", "ballad", "pop", "indie"]
-        },
-        emotional: {
-          keywords: ["feeling", "deep", "soulful", "heartfelt"],
-          descriptors: [
-            "emotionally charged",
-            "soulful and expressive",
-            "vulnerable",
-            "raw emotion"
-          ],
-          genres: ["soul", "r&b", "indie", "alternative"]
-        },
-        chill: {
-          keywords: ["relax", "mellow", "peaceful", "calm"],
-          descriptors: [
-            "laid-back tempo",
-            "soothing",
-            "ambient feel",
-            "low energy",
-            "study-friendly"
-          ],
-          genres: ["lo-fi", "ambient", "acoustic", "indie", "chill"]
-        },
-        nostalgic: {
-          keywords: ["retro", "vintage", "throwback", "classic"],
-          descriptors: [
-            "nostalgic atmosphere",
-            "retro vibes",
-            "timeless feel",
-            "throwback sound"
-          ],
-          genres: ["retro", "vintage", "classic"]
-        },
-        energetic: {
-          keywords: ["pumping", "upbeat", "driving", "intense"],
-          descriptors: [
-            "high energy",
-            "driving beat",
-            "upbeat tempo",
-            "energizing",
-            "workout-friendly"
-          ],
-          genres: ["dance", "electronic", "pop", "rock"]
-        },
-        sad: {
-          keywords: ["melancholic", "heartbreak", "lonely"],
-          descriptors: [
-            "melancholic mood",
-            "introspective",
-            "emotional depth",
-            "sad but beautiful"
-          ],
-          genres: ["indie", "alternative", "singer-songwriter"]
-        }
-      };
-
-      const fullText = context ? `${text} ${context}` : text;
-      const textLower = fullText.toLowerCase();
-
-      // Score moods based on musical descriptors, not just keywords
-      const moodScores: Record<string, number> = {};
-
-      for (const [mood, data] of Object.entries(musicalFeelMoods)) {
-        let score = 0;
-
-        // Check keywords (lower weight)
-        for (const keyword of data.keywords) {
-          if (textLower.includes(keyword)) score += 1;
-        }
-
-        // Check musical descriptors (higher weight - these describe FEEL)
-        for (const descriptor of data.descriptors) {
-          if (textLower.includes(descriptor)) score += 2;
-        }
-
-        // Genre context can help too
-        if (data.genres) {
-          for (const genre of data.genres) {
-            if (textLower.includes(genre)) score += 0.5;
-          }
-        }
-
-        if (score > 0) {
-          moodScores[mood] = score;
-        }
-      }
-
-      // Special handling: if text mentions a specific song, infer from context
-      // e.g., "like her by JVKE" -> romantic, emotional (based on song characteristics)
-      if (
-        textLower.includes("her") &&
-        textLower.includes("jvke") &&
-        !moodScores.romantic
-      ) {
-        moodScores.romantic = 2;
-        moodScores.emotional = 2;
-        moodScores.chill = 1;
-      }
-
-      const sortedMoods = Object.entries(moodScores)
-        .sort(([, a], [, b]) => b - a)
-        .map(([mood]) => mood);
-
-      const primaryMood = sortedMoods[0] || "mixed";
-      const secondaryMoods = sortedMoods.slice(1, 3);
-
-      return `🎭 **Musical Mood Classification:**\n\n**Primary Feel**: ${primaryMood}\n**Secondary Moods**: ${secondaryMoods.join(", ") || "varied"}\n**Analysis**: Focused on musical characteristics and emotional feel, not literal word matching.\n**Input**: "${text}"${context ? `\n**Context**: "${context}"` : ""}`;
-    } catch (error) {
-      return `Error classifying mood: ${error instanceof Error ? error.message : String(error)}`;
-    }
-  }
-});
 
 /**
  * Helper: Normalize track name to detect variations (remixes, slowed, etc.)
@@ -1709,12 +1545,12 @@ async function getLastFmSimilarTracks(
 }
 
 /**
- * Find tracks similar to a seed track using semantic similarity
- * Uses embeddings to match musical feel, not just keywords
+ * Find tracks similar to a seed track using Last.fm crowd-sourced similarity
+ * Uses Last.fm API to match musical feel based on user listening patterns
  */
 const findSimilarTracks = tool({
   description:
-    "Find tracks that FEEL similar to a given track, using Last.fm crowd-sourced data and related artists. Matches musical characteristics, mood, and emotional feel - not just title keywords. Use this when user says 'songs like [track]' to find musically similar tracks. Focuses on SONG similarity, not just same artist.",
+    "Find tracks that FEEL similar to a given track, using Last.fm crowd-sourced data. Matches musical characteristics, mood, and emotional feel based on user listening patterns. Use this when user says 'songs like [track]' to find musically similar tracks. Focuses on SONG similarity, not just same artist.",
   inputSchema: z.object({
     trackQuery: z
       .string()
@@ -1858,422 +1694,17 @@ const findSimilarTracks = tool({
 
 
       const seedArtist = seedTrack.artists[0];
-
-      // Get artist details to extract genres for better search
-      let seedArtistGenres: string[] = [];
-      try {
-        const artistResponse = await fetch(
-          `https://api.spotify.com/v1/artists/${seedArtist.id}`,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        if (artistResponse.ok) {
-          const artistData = (await artistResponse.json()) as { genres: string[] };
-          seedArtistGenres = artistData.genres || [];
-        }
-      } catch {
-        // Continue without genres if fetch fails
-      }
-
-      // Step 2: Get related artists
-      const relatedResponse = await fetch(
-        `https://api.spotify.com/v1/artists/${seedArtist.id}/related-artists`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }
-      );
-
-      let relatedArtists: Array<{ id: string; name: string }> = [];
-      if (relatedResponse.ok) {
-        const relatedData = (await relatedResponse.json()) as {
-          artists: Array<{ id: string; name: string }>;
-        };
-        relatedArtists = relatedData.artists.slice(0, 5);
-      }
-
-      // Step 3: Get candidate tracks - PRIORITIZE SONG FEEL over artist
-      // Strategy: Mix of seed artist tracks (limited) + related artists + genre/mood search
-      const candidateTracks: Array<{
-        id: string;
-        name: string;
-        artists: Array<{ name: string }>;
-        uri: string;
-        external_urls: { spotify: string };
-        metadata: string;
-        source: "seed_artist" | "related_artist" | "genre_search" | "lastfm";
-      }> = [];
-
       const seedNormalizedName = normalizeTrackNameForComparison(seedTrack.name);
       const seenNormalizedNames = new Set<string>();
 
-      // 3a: Get LIMITED tracks from seed artist (max 3-4 tracks, not all of them)
-      try {
-        const seedArtistTracksResponse = await fetch(
-          `https://api.spotify.com/v1/artists/${seedArtist.id}/top-tracks?market=US`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          }
-        );
+      // Step 2: Get similar tracks from Last.fm ONLY
+      const lastFmTracks = await getLastFmSimilarTracks(seedTrack.name, seedArtist.name, limit * 2);
 
-        if (seedArtistTracksResponse.ok) {
-          const seedArtistTracks = (await seedArtistTracksResponse.json()) as {
-            tracks: Array<{
-              id: string;
-              name: string;
-              artists: Array<{ name: string }>;
-              uri: string;
-              external_urls: { spotify: string };
-            }>;
-          };
-
-          // Limit to only 3-4 tracks from seed artist to prevent overfitting
-          for (const track of seedArtistTracks.tracks.slice(0, 4)) {
-            if (track.id === seedTrack.id) continue;
-
-            const trackNormalized = normalizeTrackNameForComparison(track.name);
-            if (trackNormalized === seedNormalizedName || seenNormalizedNames.has(trackNormalized)) {
-              continue;
-            }
-            seenNormalizedNames.add(trackNormalized);
-
-            candidateTracks.push({
-              id: track.id,
-              name: track.name,
-              artists: track.artists,
-              uri: track.uri,
-              external_urls: track.external_urls,
-              metadata: createTrackMetadataText(
-                track.name,
-                track.artists[0]?.name || "",
-                [],
-                "similar emotional and rhythmic feel"
-              ),
-              source: "seed_artist"
-            });
-          }
-        }
-      } catch {
-        // Continue if fails
+      if (lastFmTracks.length === 0) {
+        return `No similar tracks found for "${seedTrack.name}" by ${seedArtist.name} on Last.fm.`;
       }
 
-      // 3b: Get tracks from RELATED ARTISTS (prioritize these for diversity)
-      for (const artist of relatedArtists.slice(0, 5)) {
-        try {
-          const topTracksResponse = await fetch(
-            `https://api.spotify.com/v1/artists/${artist.id}/top-tracks?market=US`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            }
-          );
-
-          if (topTracksResponse.ok) {
-            const topTracks = (await topTracksResponse.json()) as {
-              tracks: Array<{
-                id: string;
-                name: string;
-                artists: Array<{ name: string }>;
-                uri: string;
-                external_urls: { spotify: string };
-              }>;
-            };
-
-            // Get tracks from related artists - expand beyond just top tracks
-            // Get albums to find more tracks, not just popular ones
-            try {
-              // Get artist's albums to find more diverse tracks
-              const albumsResponse = await fetch(
-                `https://api.spotify.com/v1/artists/${artist.id}/albums?include_groups=album,single&limit=5&market=US`,
-                {
-                  headers: { Authorization: `Bearer ${accessToken}` }
-                }
-              );
-
-              const albumIds: string[] = [];
-              if (albumsResponse.ok) {
-                const albumsData = (await albumsResponse.json()) as {
-                  items: Array<{ id: string }>;
-                };
-                albumIds.push(...albumsData.items.slice(0, 3).map(a => a.id));
-              }
-
-              // Get tracks from top tracks AND from albums
-              // Use a union type to allow both top tracks and album tracks
-              const allRelatedTracks: Array<{
-                id: string;
-                name: string;
-                artists: Array<{ name: string }>;
-                uri: string;
-                external_urls: { spotify: string };
-                album?: { name: string };
-              }> = [...topTracks.tracks];
-
-              // Add tracks from albums for more variety (not just popular tracks)
-              for (const albumId of albumIds.slice(0, 2)) {
-                try {
-                  const albumTracksResponse = await fetch(
-                    `https://api.spotify.com/v1/albums/${albumId}/tracks?limit=5`,
-                    {
-                      headers: { Authorization: `Bearer ${accessToken}` }
-                    }
-                  );
-                  if (albumTracksResponse.ok) {
-                    const albumTracksData = (await albumTracksResponse.json()) as {
-                      items: Array<{
-                        id: string;
-                        name: string;
-                        artists: Array<{ name: string }>;
-                        uri: string;
-                        external_urls: { spotify: string };
-                      }>;
-                    };
-                    // Convert to same format as top tracks
-                    for (const item of albumTracksData.items.slice(0, 3)) {
-                      allRelatedTracks.push({
-                        id: item.id,
-                        name: item.name,
-                        artists: item.artists,
-                        uri: item.uri,
-                        external_urls: item.external_urls
-                      });
-                    }
-                  }
-                } catch {
-                  // Continue if album fetch fails
-                }
-              }
-
-              // Process all tracks (top + album tracks) for more variety
-              for (const track of allRelatedTracks.slice(0, 8)) {
-                const trackNormalized = normalizeTrackNameForComparison(track.name);
-                if (trackNormalized === seedNormalizedName || seenNormalizedNames.has(trackNormalized)) {
-                  continue;
-                }
-                seenNormalizedNames.add(trackNormalized);
-
-                candidateTracks.push({
-                  id: track.id,
-                  name: track.name,
-                  artists: track.artists,
-                  uri: track.uri,
-                  external_urls: track.external_urls,
-                  metadata: createTrackMetadataText(
-                    track.name,
-                    track.artists[0]?.name || "",
-                    [],
-                    "similar emotional and rhythmic feel"
-                  ),
-                  source: "related_artist"
-                });
-              }
-            } catch {
-              // Fallback: just use top tracks if album fetch fails
-              for (const track of topTracks.tracks.slice(0, 6)) {
-                const trackNormalized = normalizeTrackNameForComparison(track.name);
-                if (trackNormalized === seedNormalizedName || seenNormalizedNames.has(trackNormalized)) {
-                  continue;
-                }
-                seenNormalizedNames.add(trackNormalized);
-
-                candidateTracks.push({
-                  id: track.id,
-                  name: track.name,
-                  artists: track.artists,
-                  uri: track.uri,
-                  external_urls: track.external_urls,
-                  metadata: createTrackMetadataText(
-                    track.name,
-                    track.artists[0]?.name || "",
-                    [],
-                    "similar emotional and rhythmic feel"
-                  ),
-                  source: "related_artist"
-                });
-              }
-            }
-          }
-        } catch {
-          // Continue if artist tracks fetch fails
-        }
-      }
-
-      // 3c: Search by GENRE/MOOD keywords (focus on SONG characteristics, not artist)
-      // Build dynamic search terms based on SEED TRACK characteristics
-      // This ensures different seed tracks produce different playlists
-      const baseGenres = seedArtistGenres.slice(0, 2);
-      const dynamicSearchTerms: string[] = [];
-
-      // Create search terms based on seed track's actual genres
-      if (baseGenres.length > 0) {
-        // Use actual genres from the seed artist
-        baseGenres.forEach(genre => {
-          dynamicSearchTerms.push(`${genre} chill`);
-          dynamicSearchTerms.push(`${genre} mellow`);
-          dynamicSearchTerms.push(`indie ${genre}`);
-        });
-      } else {
-        // Fallback: infer from track name/context
-        const trackNameLower = seedTrack.name.toLowerCase();
-        if (trackNameLower.includes("blue") || trackNameLower.includes("chill")) {
-          dynamicSearchTerms.push("chill indie", "mellow pop", "soft indie");
-        } else {
-          dynamicSearchTerms.push("indie pop", "mellow indie", "chill pop");
-        }
-      }
-
-      // Add variety with different offsets to get different tracks each time
-      const searchOffsets = [0, 5, 10]; // Get different batches of results
-
-      for (let i = 0; i < Math.min(3, dynamicSearchTerms.length); i++) {
-        const searchTerm = dynamicSearchTerms[i];
-        const offset = searchOffsets[i % searchOffsets.length]; // Cycle through offsets
-
-        try {
-          const searchResponse = await fetch(
-            `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchTerm)}&type=track&limit=10&offset=${offset}`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            }
-          );
-
-          if (searchResponse.ok) {
-            const searchData = (await searchResponse.json()) as {
-              tracks: {
-                items: Array<{
-                  id: string;
-                  name: string;
-                  artists: Array<{ name: string }>;
-                  uri: string;
-                  external_urls: { spotify: string };
-                }>;
-              };
-            };
-
-            for (const track of searchData.tracks.items) {
-              // Skip seed artist tracks in genre search (we already have them)
-              if (track.artists.some((a) => a.name === seedArtist.name)) {
-                continue;
-              }
-
-              const trackNormalized = normalizeTrackNameForComparison(track.name);
-              if (trackNormalized === seedNormalizedName || seenNormalizedNames.has(trackNormalized)) {
-                continue;
-              }
-              seenNormalizedNames.add(trackNormalized);
-
-              // Only add if not already in candidate tracks
-              // Don't filter by popularity - include all tracks for variety
-              if (!candidateTracks.some((ct) => ct.id === track.id)) {
-                candidateTracks.push({
-                  id: track.id,
-                  name: track.name,
-                  artists: track.artists,
-                  uri: track.uri,
-                  external_urls: track.external_urls,
-                  metadata: createTrackMetadataText(
-                    track.name,
-                    track.artists[0]?.name || "",
-                    [],
-                    "similar emotional and rhythmic feel"
-                  ),
-                  source: "genre_search"
-                });
-              }
-            }
-          }
-        } catch {
-          // Continue if search fails
-        }
-      }
-
-      // 3d: Get tracks from LAST.FM (Crowd-sourced similarity - BEST for vibe matching)
-      try {
-        const lastFmTracks = await getLastFmSimilarTracks(seedTrack.name, seedArtist.name, 15);
-
-        // Search these tracks on Spotify to get IDs
-        for (const lfmTrack of lastFmTracks) {
-          // Skip if match score is too low (unless we have few tracks)
-          if (lfmTrack.match < 0.15 && candidateTracks.length > 20) continue;
-
-          try {
-            // Step 1: Find the seed track
-            // We'll try to parse "Track by Artist" to be more specific in selection
-            let targetArtist: string | null = null;
-            let cleanQuery = `track:${lfmTrack.name} artist:${lfmTrack.artist}`; // Use lfmTrack for query
-
-            // Attempt to parse artist from the Last.fm track name if it's in "Track by Artist" format
-            const lfmTrackNameLower = lfmTrack.name.toLowerCase();
-            if (lfmTrackNameLower.includes(" by ")) {
-              const parts = lfmTrackNameLower.split(/ by /i);
-              if (parts.length >= 2) {
-                cleanQuery = `track:${parts[0].trim()} artist:${lfmTrack.artist}`;
-                targetArtist = parts[1].trim().toLowerCase();
-              }
-            } else {
-              targetArtist = lfmTrack.artist.toLowerCase();
-            }
-
-            // Search for the track
-            const searchResponse = await fetch(
-              `https://api.spotify.com/v1/search?q=${encodeURIComponent(cleanQuery)}&type=track&limit=5`,
-              { headers: { Authorization: `Bearer ${accessToken}` } }
-            );
-
-            if (searchResponse.ok) {
-              const searchData = (await searchResponse.json()) as {
-                tracks: {
-                  items: Array<{
-                    id: string;
-                    name: string;
-                    artists: Array<{ name: string }>;
-                    uri: string;
-                    external_urls: { spotify: string };
-                  }>;
-                };
-              };
-
-              if (searchData.tracks.items.length > 0) {
-                // Smart Selection: Find the best match for the artist
-                let track = searchData.tracks.items[0];
-
-                if (targetArtist) {
-                  const artistMatch = searchData.tracks.items.find(t =>
-                    t.artists.some(a => a.name.toLowerCase().includes(targetArtist!))
-                  );
-                  if (artistMatch) track = artistMatch;
-                }
-
-                const trackNormalized = normalizeTrackNameForComparison(track.name);
-                if (trackNormalized === seedNormalizedName || seenNormalizedNames.has(trackNormalized)) {
-                  continue;
-                }
-                seenNormalizedNames.add(trackNormalized);
-
-                if (!candidateTracks.some((ct) => ct.id === track.id)) {
-                  candidateTracks.push({
-                    id: track.id,
-                    name: track.name,
-                    artists: track.artists,
-                    uri: track.uri,
-                    external_urls: track.external_urls,
-                    metadata: createTrackMetadataText(
-                      track.name,
-                      track.artists[0]?.name || "",
-                      [],
-                      "similar vibe and audience"
-                    ),
-                    source: "lastfm"
-                  });
-                }
-              }
-            }
-          } catch {
-            // Continue if search fails
-          }
-        }
-      } catch (error) {
-        console.error("DEBUG: Error fetching Last.fm tracks:", error);
-      }
-
-      // Step 4: Get user's tracks to exclude if requested
+      // Step 3: Get user's tracks to exclude if requested
       const excludeIds = new Set<string>();
       if (excludeUserTracks && authCode) {
         try {
@@ -2305,246 +1736,98 @@ const findSimilarTracks = tool({
         }
       }
 
-      // Step 5: Filter and rank tracks with diversity balancing
-      // Create seed track metadata for comparison - use ACTUAL track characteristics
-      // This ensures different seed tracks produce different playlists
-      const seedTrackGenres = seedArtistGenres.join(", ") || "indie pop";
-      const seedMetadata = createTrackMetadataText(
-        seedTrack.name,
-        seedArtist.name,
-        seedArtistGenres,
-        `${seedTrackGenres} similar emotional feel`
-      );
+      // Step 4: Search Last.fm tracks on Spotify and collect valid ones
+      const finalTracks: Array<{
+        id: string;
+        name: string;
+        artists: Array<{ name: string }>;
+        uri: string;
+        external_urls: { spotify: string };
+        match: number;
+      }> = [];
 
-      // Use the seed normalized name from earlier
+      for (const lfmTrack of lastFmTracks) {
+        if (finalTracks.length >= limit) break;
 
-      // Score tracks with diversity balancing
-      const scoredTracks = candidateTracks
-        .filter((track) => {
-          // Exclude user tracks if requested
-          if (excludeIds.has(track.id)) return false;
+        // Skip if match score is too low
+        if (lfmTrack.match < 0.1) continue;
 
-          // Filter out variations/remixes of the seed track
-          const trackNormalized = normalizeTrackNameForComparison(track.name);
-          if (trackNormalized === seedNormalizedName) {
-            return false; // Skip remixes/variations of the same song
+        try {
+          // Search for the track on Spotify
+          let targetArtist: string | null = null;
+          let cleanQuery = `track:${lfmTrack.name} artist:${lfmTrack.artist}`;
+
+          const lfmTrackNameLower = lfmTrack.name.toLowerCase();
+          if (lfmTrackNameLower.includes(" by ")) {
+            const parts = lfmTrackNameLower.split(/ by /i);
+            if (parts.length >= 2) {
+              cleanQuery = `track:${parts[0].trim()} artist:${lfmTrack.artist}`;
+              targetArtist = parts[1].trim().toLowerCase();
+            }
+          } else {
+            targetArtist = lfmTrack.artist.toLowerCase();
           }
 
-          return true;
-        })
-        .map((track) => {
-          let score = 0;
-          const isSameArtist = track.artists.some((a) => a.name === seedArtist.name);
-          const isRelatedArtist = relatedArtists.some((ra) =>
-            track.artists.some((ta) => ta.name === ra.name)
+          const searchResponse = await fetch(
+            `https://api.spotify.com/v1/search?q=${encodeURIComponent(cleanQuery)}&type=track&limit=5`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
           );
 
-          // Same artist gets moderate score (not too high to avoid overfitting)
-          if (isSameArtist) {
-            score += 6; // Reduced from 10 to allow diversity
-          }
+          if (searchResponse.ok) {
+            const searchData = (await searchResponse.json()) as {
+              tracks: {
+                items: Array<{
+                  id: string;
+                  name: string;
+                  artists: Array<{ name: string }>;
+                  uri: string;
+                  external_urls: { spotify: string };
+                }>;
+              };
+            };
 
-          // Related artist gets good score
-          if (isRelatedArtist) {
-            score += 8; // Increased to promote diversity
-          }
+            if (searchData.tracks.items.length > 0) {
+              // Find best match for the artist
+              let track = searchData.tracks.items[0];
 
-          // Similar genre/tempo keywords (simplified heuristic)
-          const trackText = track.metadata.toLowerCase();
-          const seedText = seedMetadata.toLowerCase();
-
-          if (
-            trackText.includes("romantic") &&
-            seedText.includes("romantic")
-          ) {
-            score += 3;
-          }
-          if (trackText.includes("chill") && seedText.includes("chill")) {
-            score += 3;
-          }
-          if (trackText.includes("emotional") && seedText.includes("emotional")) {
-            score += 3;
-          }
-
-          // Boost Last.fm tracks significantly
-          if (track.source === "lastfm") {
-            score += 15; // High priority for crowd-sourced similarity
-          }
-
-          return { track, score, isSameArtist, isRelatedArtist };
-        })
-        .sort((a, b) => b.score - a.score);
-
-      // Apply STRICT diversity balancing
-      // Focus on SONG similarity, not artist similarity
-      const finalTracks: Array<typeof scoredTracks[0]["track"]> = [];
-      const artistCount = new Map<string, number>();
-      let sameArtistTotal = 0;
-      const maxSameArtistTracks = 2; // HARD CAP: Max 2 tracks from seed artist (like "do you think..." and "wildflower")
-      const minRelatedArtistTracks = Math.max(5, Math.floor(limit * 0.6)); // At least 60% from related artists (focus on song feel)
-      const minGenreSearchTracks = Math.max(3, Math.floor(limit * 0.3)); // At least 30% from genre search (different artists, similar feel)
-      const maxTracksPerArtist = 1; // STRICT: Max 1 track per ANY artist (seed artist exception: can have 2)
-
-      // First pass: STRICT diversity - prioritize related artists and genre search
-      // Group tracks by source type for balanced selection
-      const seedArtistTracks = scoredTracks.filter((st) => st.isSameArtist);
-      const relatedArtistTracks = scoredTracks.filter((st) => st.isRelatedArtist && !st.isSameArtist);
-      const lastFmTracks = scoredTracks.filter((st) =>
-        candidateTracks.find((ct) => ct.id === st.track.id)?.source === "lastfm"
-      );
-      const genreSearchTracks = scoredTracks.filter((st) =>
-        candidateTracks.find((ct) => ct.id === st.track.id)?.source === "genre_search"
-      );
-      const otherTracks = scoredTracks.filter((st) => !st.isSameArtist && !st.isRelatedArtist &&
-        candidateTracks.find((ct) => ct.id === st.track.id)?.source !== "genre_search" &&
-        candidateTracks.find((ct) => ct.id === st.track.id)?.source !== "lastfm"
-      );
-
-      // Select tracks with STRICT diversity quotas
-      // PRIORITIZE: Last.fm (best matches), then Related artists, then genre search
-
-      // 1. FIRST: Last.fm tracks (fill up to 100% of limit)
-      // User requested exclusivity for Last.fm
-      for (const { track } of lastFmTracks) {
-        if (finalTracks.length >= limit) break;
-        const artistKey = track.artists[0]?.name || "";
-        const currentArtistCount = artistCount.get(artistKey) || 0;
-
-        if (!finalTracks.some((t) => t.id === track.id)) {
-          if (artistKey === seedArtist.name || currentArtistCount >= maxTracksPerArtist) {
-            continue;
-          }
-          artistCount.set(artistKey, currentArtistCount + 1);
-          finalTracks.push(track);
-        }
-      }
-
-      // 2. SECOND: Related artists (fallback only)
-      if (finalTracks.length < limit) {
-        for (const { track, isRelatedArtist } of relatedArtistTracks) {
-          if (finalTracks.length >= limit) break;
-          const artistKey = track.artists[0]?.name || "";
-          const currentArtistCount = artistCount.get(artistKey) || 0;
-
-          if (isRelatedArtist &&
-            artistKey !== seedArtist.name && // Skip seed artist here
-            currentArtistCount < maxTracksPerArtist &&
-            !finalTracks.some((t) => t.id === track.id)) {
-            artistCount.set(artistKey, currentArtistCount + 1);
-            finalTracks.push(track);
-          }
-        }
-      }
-
-      // 3. THIRD: Genre search tracks (fallback only)
-      if (finalTracks.length < limit) {
-        const currentGenreCount = finalTracks.filter((track) =>
-          genreSearchTracks.some((st) => st.track.id === track.id)
-        ).length;
-
-        if (currentGenreCount < minGenreSearchTracks || finalTracks.length < limit) {
-          for (const { track } of genreSearchTracks) {
-            if (finalTracks.length >= limit) break;
-            const artistKey = track.artists[0]?.name || "";
-            const currentArtistCount = artistCount.get(artistKey) || 0;
-
-            if (!finalTracks.some((t) => t.id === track.id)) {
-              if (artistKey === seedArtist.name || currentArtistCount >= maxTracksPerArtist) {
-                continue; // Skip seed artist and already-represented artists
+              if (targetArtist) {
+                const artistMatch = searchData.tracks.items.find(t =>
+                  t.artists.some(a => a.name.toLowerCase().includes(targetArtist!))
+                );
+                if (artistMatch) track = artistMatch;
               }
-              artistCount.set(artistKey, currentArtistCount + 1);
-              finalTracks.push(track);
+
+              // Filter out variations/remixes of the seed track
+              const trackNormalized = normalizeTrackNameForComparison(track.name);
+              if (trackNormalized === seedNormalizedName || seenNormalizedNames.has(trackNormalized)) {
+                continue;
+              }
+
+              // Exclude user tracks if requested
+              if (excludeIds.has(track.id)) {
+                continue;
+              }
+
+              seenNormalizedNames.add(trackNormalized);
+
+              // Add track (sorted by match score, highest first)
+              finalTracks.push({
+                id: track.id,
+                name: track.name,
+                artists: track.artists,
+                uri: track.uri,
+                external_urls: track.external_urls,
+                match: lfmTrack.match
+              });
             }
           }
+        } catch {
+          // Continue if search fails
         }
       }
 
-      // 3. LAST: Seed artist (max 2 tracks - only add AFTER we have diversity from other sources)
-      // Only add seed artist tracks if we have room AND already have diverse tracks
-      if (finalTracks.length >= Math.floor(limit * 0.6)) {
-        // Only add seed artist tracks if we already have at least 60% from other sources
-        for (const { track, isSameArtist } of seedArtistTracks.slice(0, maxSameArtistTracks)) {
-          if (finalTracks.length >= limit) break;
-          const artistKey = track.artists[0]?.name || "";
-          if (isSameArtist && artistKey === seedArtist.name && sameArtistTotal < maxSameArtistTracks) {
-            artistCount.set(artistKey, (artistCount.get(artistKey) || 0) + 1);
-            sameArtistTotal++;
-            finalTracks.push(track);
-          }
-        }
-      }
-
-      // 4. Fill remaining slots ONLY if we haven't met diversity requirements
-      // Skip seed artist tracks here - they're handled separately
-      if (finalTracks.length < limit) {
-        for (const { track } of otherTracks) {
-          if (finalTracks.length >= limit) break;
-          const artistKey = track.artists[0]?.name || "";
-          const currentArtistCount = artistCount.get(artistKey) || 0;
-
-          // NEVER add seed artist tracks here - they're added separately after diversity is met
-          if (artistKey === seedArtist.name) {
-            continue;
-          }
-
-          if (!finalTracks.some((t) => t.id === track.id) && currentArtistCount < maxTracksPerArtist) {
-            artistCount.set(artistKey, currentArtistCount + 1);
-            finalTracks.push(track);
-          }
-        }
-      }
-
-      // Final boost: Ensure minimum diversity requirements
-      const relatedCount = finalTracks.filter((track) =>
-        relatedArtists.some((ra) =>
-          track.artists.some((ta) => ta.name === ra.name)
-        )
-      ).length;
-
-      const genreCount = finalTracks.filter((track) =>
-        genreSearchTracks.some((st) => st.track.id === track.id)
-      ).length;
-
-      // If we still need more diversity, prioritize related artists and genre search
-      if (finalTracks.length < limit) {
-        // Boost related artists first
-        if (relatedCount < minRelatedArtistTracks) {
-          for (const { track, isRelatedArtist } of relatedArtistTracks) {
-            if (finalTracks.length >= limit) break;
-            const artistKey = track.artists[0]?.name || "";
-            const currentArtistCount = artistCount.get(artistKey) || 0;
-
-            if (
-              isRelatedArtist &&
-              !finalTracks.some((t) => t.id === track.id) &&
-              currentArtistCount < maxTracksPerArtist &&
-              artistKey !== seedArtist.name
-            ) {
-              artistCount.set(artistKey, currentArtistCount + 1);
-              finalTracks.push(track);
-            }
-          }
-        }
-
-        // Then boost genre search
-        if (genreCount < minGenreSearchTracks) {
-          for (const { track } of genreSearchTracks) {
-            if (finalTracks.length >= limit) break;
-            const artistKey = track.artists[0]?.name || "";
-            const currentArtistCount = artistCount.get(artistKey) || 0;
-
-            if (
-              !finalTracks.some((t) => t.id === track.id) &&
-              artistKey !== seedArtist.name &&
-              currentArtistCount < maxTracksPerArtist
-            ) {
-              artistCount.set(artistKey, currentArtistCount + 1);
-              finalTracks.push(track);
-            }
-          }
-        }
-      }
-
+      // Sort by match score (highest first) and limit
+      finalTracks.sort((a, b) => b.match - a.match);
       const tracks = finalTracks.slice(0, limit);
 
       if (tracks.length === 0) {
@@ -2554,7 +1837,7 @@ const findSimilarTracks = tool({
       // Format response
       let result = `🎵 **Tracks Similar to "${seedTrack.name}" by ${seedArtist.name}:**\n\n`;
       result += `**Seed Track**: [${seedTrack.name}](${seedTrack.external_urls.spotify})\n\n`;
-      result += "**Similar Tracks** (balanced mix of same artist, related artists, and variety):\n\n";
+      result += `**Similar Tracks** (based on Last.fm crowd-sourced similarity):\n\n`;
 
       tracks.forEach((track, index) => {
         result += `${index + 1}. **${track.name}**\n`;
@@ -2677,7 +1960,7 @@ const summarizeUserTaste = tool({
  */
 const generatePlaylistByMood = tool({
   description:
-    "Create a mood-based playlist by combining user's top artists, related artists, mood classification, and search. Supports 'new', 'familiar', or 'mixed' track preferences.",
+    "Create a mood-based playlist using Last.fm crowd-sourced similarity data from user's top tracks. Supports 'new', 'familiar', or 'mixed' track preferences.",
   inputSchema: z.object({
     mood: z
       .string()
@@ -2721,13 +2004,9 @@ const generatePlaylistByMood = tool({
         display_name: string;
       };
 
-      // Step 2: Get user's top artists and tracks for reference
-      const [topArtistsResponse, topTracksResponse, likedResponse] =
+      // Step 2: Get user's top tracks for reference
+      const [topTracksResponse, likedResponse] =
         await Promise.all([
-          fetch(
-            "https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10",
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-          ),
           fetch(
             "https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=20",
             { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -2737,12 +2016,6 @@ const generatePlaylistByMood = tool({
           }).catch(() => null)
         ]);
 
-      const topArtists =
-        topArtistsResponse.ok
-          ? ((await topArtistsResponse.json()) as {
-            items: Array<{ id: string; name: string }>;
-          })
-          : { items: [] };
       const topTracks =
         topTracksResponse.ok
           ? ((await topTracksResponse.json()) as {
@@ -2764,109 +2037,101 @@ const generatePlaylistByMood = tool({
         );
       }
 
-      // Step 3: Get related artists from top artists
-      const relatedArtistIds: string[] = [];
-      for (const artist of topArtists.items.slice(0, 3)) {
-        try {
-          const relatedResponse = await fetch(
-            `https://api.spotify.com/v1/artists/${artist.id}/related-artists`,
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`
-              }
-            }
-          );
-          if (relatedResponse.ok) {
-            const related = (await relatedResponse.json()) as {
-              artists: Array<{ id: string }>;
-            };
-            relatedArtistIds.push(...related.artists.slice(0, 2).map((a) => a.id));
-          }
-        } catch {
-          // Continue if related artists fetch fails
-        }
-      }
-
-      // Step 4: Search for tracks by mood - using MUSICAL FEEL, not literal words
-      // Build search queries that focus on genre, artist style, and musical characteristics
-      // rather than just the mood keyword in the title
-      const primaryArtist = topArtists.items[0];
-
-      // Create smart search queries that avoid literal word matching
-      // e.g., for "happy" mood, search for "upbeat pop" or "energetic [genre]" not "happy song"
-      const moodSearchMap: Record<string, string[]> = {
-        happy: ["upbeat pop", "energetic dance", "joyful"],
-        chill: ["mellow", "ambient", "lo-fi", "acoustic"],
-        energetic: ["upbeat", "driving beat", "pump up"],
-        nostalgic: ["retro", "vintage", "throwback"],
-        romantic: ["romantic pop", "love song", "intimate"],
-        sad: ["melancholic", "emotional", "heartbreak"],
-        emotional: ["soulful", "deep", "expressive"]
-      };
-
-      const moodSearchTerms = moodSearchMap[mood.toLowerCase()] || [mood];
-
-      const searchQueries = [
-        ...moodSearchTerms.slice(0, 2),
-        primaryArtist ? `${moodSearchTerms[0]} ${primaryArtist.name}` : null
-      ].filter(Boolean) as string[];
-
+      // Step 3: Get tracks using Last.fm similarity
+      // For mood playlists, get similar tracks from user's top tracks using Last.fm
       const trackUris: string[] = [];
       const addedIds = new Set<string>();
 
-      // Search with genre/feel focus, not title keywords
-      for (const query of searchQueries) {
-        try {
-          const searchResponse = await fetch(
-            `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`,
-            {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            }
-          );
+      // Get top tracks with full metadata (name and artist)
+      const topTracksWithMetadata = topTracksResponse.ok
+        ? ((await topTracksResponse.json()) as {
+          items: Array<{
+            id: string;
+            uri: string;
+            name: string;
+            artists: Array<{ name: string }>;
+          }>;
+        })
+        : { items: [] };
 
-          if (searchResponse.ok) {
-            const searchData = (await searchResponse.json()) as {
-              tracks: {
-                items: Array<{ id: string; uri: string; name: string; artists: Array<{ name: string }> }>;
-              };
-            };
-
-            for (const track of searchData.tracks.items) {
-              // Filter out tracks with mood keyword in title (to avoid literal matching)
-              // e.g., skip "Happy Song" when mood is "happy" - we want tracks that FEEL happy
-              const trackNameLower = track.name.toLowerCase();
-              const moodLower = mood.toLowerCase();
-
-              // Skip if title literally contains the mood word (unless it's a common word)
-              const commonWords = ["the", "a", "an", "is", "are", "in", "on"];
-              if (
-                !commonWords.includes(moodLower) &&
-                trackNameLower.includes(moodLower)
-              ) {
-                continue; // Skip literal matches
-              }
-
-              if (
-                !addedIds.has(track.id) &&
-                (familiarity !== "new" || !excludeIds.has(track.id))
-              ) {
-                trackUris.push(track.uri);
-                addedIds.add(track.id);
-                if (trackUris.length >= 15) break; // Limit to 15 tracks
-              }
-            }
-          }
-        } catch {
-          // Continue if search fails
-        }
-      }
-
-      // If familiarity is "familiar", use top tracks
-      if (familiarity === "familiar" && trackUris.length < 15) {
-        for (const track of topTracks.items) {
-          if (!addedIds.has(track.id) && trackUris.length < 15) {
+      // If familiarity is "familiar", use top tracks directly
+      if (familiarity === "familiar") {
+        for (const track of topTracksWithMetadata.items.slice(0, 20)) {
+          if (!addedIds.has(track.id)) {
             trackUris.push(track.uri);
             addedIds.add(track.id);
+          }
+        }
+      } else {
+        // For "new" or "mixed", use Last.fm to find similar tracks
+        // Sample a few top tracks to get their Last.fm similar tracks
+        const sampleTracks = topTracksWithMetadata.items.slice(0, 5);
+        
+        for (const seedTrack of sampleTracks) {
+          if (trackUris.length >= 20) break;
+          
+          const artistName = seedTrack.artists[0]?.name || "";
+          if (!artistName) continue;
+
+          try {
+            // Get Last.fm similar tracks
+            const lastFmTracks = await getLastFmSimilarTracks(seedTrack.name, artistName, 10);
+
+            // Search each Last.fm track on Spotify
+            for (const lfmTrack of lastFmTracks) {
+              if (trackUris.length >= 20) break;
+              if (lfmTrack.match < 0.1) continue;
+
+              try {
+                const cleanQuery = `track:${lfmTrack.name} artist:${lfmTrack.artist}`;
+                const searchResponse = await fetch(
+                  `https://api.spotify.com/v1/search?q=${encodeURIComponent(cleanQuery)}&type=track&limit=3`,
+                  { headers: { Authorization: `Bearer ${accessToken}` } }
+                );
+
+                if (searchResponse.ok) {
+                  const searchData = (await searchResponse.json()) as {
+                    tracks: {
+                      items: Array<{
+                        id: string;
+                        uri: string;
+                        name: string;
+                        artists: Array<{ name: string }>;
+                      }>;
+                    };
+                  };
+
+                  if (searchData.tracks.items.length > 0) {
+                    const track = searchData.tracks.items[0];
+
+                    // Exclude if requested
+                    if (familiarity === "new" && excludeIds.has(track.id)) {
+                      continue;
+                    }
+
+                    if (!addedIds.has(track.id)) {
+                      trackUris.push(track.uri);
+                      addedIds.add(track.id);
+                    }
+                  }
+                }
+              } catch {
+                // Continue if search fails
+              }
+            }
+          } catch {
+            // Continue if Last.fm fetch fails
+          }
+        }
+
+        // If we don't have enough tracks, add some top tracks
+        if (familiarity === "mixed" && trackUris.length < 10) {
+          for (const track of topTracksWithMetadata.items) {
+            if (trackUris.length >= 20) break;
+            if (!addedIds.has(track.id)) {
+              trackUris.push(track.uri);
+              addedIds.add(track.id);
+            }
           }
         }
       }
@@ -2952,7 +2217,6 @@ export const tools = {
   getUserPlaylists,
   getLikedTracks,
   getRelatedArtists,
-  classifyMoodAI,
   generatePlaylistByMood,
   summarizeUserTaste,
   findSimilarTracks

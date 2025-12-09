@@ -4,7 +4,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "damp-block-d4f7",
+  "name": "beatsmith",
   "main": "src/server.ts",
   "compatibility_date": "2025-08-03",
   "compatibility_flags": ["nodejs_compat"],
