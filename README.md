@@ -1,55 +1,73 @@
-# 🤖 Chat Agent Starter Kit
+# Beatsmith AI
 
 ![npm i agents command](./npm-agents-banner.svg)
 
 <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/agents-starter"><img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare"/></a>
 
-A starter template for building AI-powered chat agents using Cloudflare's Agent platform, powered by [`agents`](https://www.npmjs.com/package/agents). This project provides a foundation for creating interactive chat experiences with AI, complete with a modern UI and tool integration capabilities.
+Beatsmith AI is an AI-powered music discovery assistant built with Cloudflare's Agent platform, powered by [`agents`](https://www.npmjs.com/package/agents). Discover new songs, find similar artists, and explore music through natural conversation with AI.
 
 ## Features
 
-- 💬 Interactive chat interface with AI
-- 🛠️ Built-in tool system with human-in-the-loop confirmation
-- 📅 Advanced task scheduling (one-time, delayed, and recurring via cron)
-- 🌓 Dark/Light theme support
-- ⚡️ Real-time streaming responses
-- 🔄 State management and chat history
-- 🎨 Modern, responsive UI
+- Music discovery and recommendations
+- Search Spotify tracks and artists
+- Find similar songs using Last.fm data
+- Discover related artists
+- Get detailed track information
+- Dark/Light theme support
+- Real-time streaming responses
+- State management and chat history
+- Modern, responsive UI
 
 ## Prerequisites
 
 - Cloudflare account
 - OpenAI API key
+- Spotify API credentials (Client ID and Client Secret)
+- Last.fm API key
 
 ## Quick Start
 
-1. Create a new project:
-
-```bash
-npx create-cloudflare@latest --template cloudflare/agents-starter
-```
-
-2. Install dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Set up your environment:
+2. Set up your environment:
 
 Create a `.dev.vars` file:
 
 ```env
 OPENAI_API_KEY=your_openai_api_key
+SPOTIFY_CLIENT_ID=your_spotify_client_id
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+LASTFM_API_KEY=your_lastfm_api_key
 ```
 
-4. Run locally:
+To get your API keys:
+- **OpenAI API Key**: Sign up at [OpenAI](https://platform.openai.com/api-keys)
+- **Spotify Credentials**: Create an app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+- **Last.fm API Key**: Get an API key at [Last.fm API](https://www.last.fm/api/account/create)
+
+### Accessing Login Features
+
+**Note**: The Spotify login system has been deprecated in the default implementation. However, if you want to enable user-specific features (such as accessing user's top tracks, playlists, or creating playlists), you will need to:
+
+1. Set up your own Spotify app in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+2. Configure the redirect URI in your Spotify app settings to match your deployment URL (e.g., `https://your-domain.workers.dev/callback`)
+3. Add yourself and any other users to the **User Management** section of your Spotify app
+4. Update the callback URL in `tools.ts` to match your deployment
+5. Users must be explicitly added to your Spotify app's user list before they can authenticate
+
+Without setting up your own Spotify app with user management, only public Spotify features (search, track info, related artists) will be available.
+
+3. Run locally:
 
 ```bash
 npm start
 ```
 
-5. Deploy:
+4. Deploy:
 
 ```bash
 npm run deploy
@@ -66,6 +84,16 @@ npm run deploy
 │   └── styles.css     # UI styling
 ```
 
+## Available Tools
+
+Beatsmith AI comes with the following music-related tools:
+
+- **Search Spotify Tracks** - Search for songs and artists on Spotify
+- **Find Similar Songs** - Discover tracks similar to a given song using Last.fm data
+- **Get Related Artists** - Find artists similar to a given artist
+- **Get Track Information** - Retrieve detailed metadata for any Spotify track
+- **Search Spotify Artist** - Look up artist information by name or ID
+
 ## Customization Guide
 
 ### Adding New Tools
@@ -76,7 +104,7 @@ Add new tools in `tools.ts` using the tool builder:
 // Example of a tool that requires confirmation
 const searchDatabase = tool({
   description: "Search the database for user records",
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string(),
     limit: z.number().optional()
   })
@@ -86,22 +114,8 @@ const searchDatabase = tool({
 // Example of an auto-executing tool
 const getCurrentTime = tool({
   description: "Get current server time",
-  parameters: z.object({}),
+  inputSchema: z.object({}),
   execute: async () => new Date().toISOString()
-});
-
-// Scheduling tool implementation
-const scheduleTask = tool({
-  description:
-    "schedule a task to be executed at a later time. 'when' can be a date, a delay in seconds, or a cron pattern.",
-  parameters: z.object({
-    type: z.enum(["scheduled", "delayed", "cron"]),
-    when: z.union([z.number(), z.string()]),
-    payload: z.string()
-  }),
-  execute: async ({ type, when, payload }) => {
-    // ... see the implementation in tools.ts
-  }
 });
 ```
 
@@ -181,51 +195,24 @@ The chat interface is built with React and can be customized in `app.tsx`:
 - Customize message rendering and tool confirmation dialogs
 - Add new controls to the header
 
-### Example Use Cases
+### Example Queries
 
-1. **Customer Support Agent**
-   - Add tools for:
-     - Ticket creation/lookup
-     - Order status checking
-     - Product recommendations
-     - FAQ database search
+Try asking Beatsmith AI:
 
-2. **Development Assistant**
-   - Integrate tools for:
-     - Code linting
-     - Git operations
-     - Documentation search
-     - Dependency checking
+- "Find songs similar to Cruel Summer"
+- "Find artists similar to The Weeknd"
+- "Search for Taylor Swift on Spotify"
+- "Get track information for [song name]"
+- "What songs are similar to [track name]?"
 
-3. **Data Analysis Assistant**
-   - Build tools for:
-     - Database querying
-     - Data visualization
-     - Statistical analysis
-     - Report generation
+### Extending Beatsmith
 
-4. **Personal Productivity Assistant**
-   - Implement tools for:
-     - Task scheduling with flexible timing options
-     - One-time, delayed, and recurring task management
-     - Task tracking with reminders
-     - Email drafting
-     - Note taking
+You can extend Beatsmith AI by:
 
-5. **Scheduling Assistant**
-   - Build tools for:
-     - One-time event scheduling using specific dates
-     - Delayed task execution (e.g., "remind me in 30 minutes")
-     - Recurring tasks using cron patterns
-     - Task payload management
-     - Flexible scheduling patterns
-
-Each use case can be implemented by:
-
-1. Adding relevant tools in `tools.ts`
-2. Customizing the UI for specific interactions
+1. Adding new music-related tools in `tools.ts`
+2. Customizing the UI for specific interactions in `app.tsx`
 3. Extending the agent's capabilities in `server.ts`
-4. Adding any necessary external API integrations
+4. Integrating additional music APIs (e.g., Apple Music, YouTube Music)
 
 ## Learn More
 
