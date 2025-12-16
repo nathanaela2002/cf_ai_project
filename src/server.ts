@@ -173,6 +173,7 @@ When adding tracks to a playlist, you need to convert track IDs to URIs in the f
           >,
           stopWhen: stepCountIs(15), // Increased to allow multi-step workflows to complete (was 10)
           maxSteps: 15 // Enable multi-step calls so model generates text after tool execution
+          // biome-ignore lint/suspicious/noExplicitAny: complex type inference required for streamText
         } as any);
 
         writer.merge(result.toUIMessageStream());
