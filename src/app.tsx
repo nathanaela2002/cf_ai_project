@@ -26,7 +26,6 @@ import {
 // List of tools that require human confirmation
 // NOTE: this should match the tools that don't have execute functions in tools.ts
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
-  "getWeatherInformation",
   "searchSpotifyArtist"
 ];
 
@@ -218,22 +217,67 @@ export default function Chat() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-28 max-h-[calc(100vh-10rem)] scrollbar-hide">
           {agentMessages.length === 0 && (
-            <div className="h-full flex items-center justify-center">
-              <div className="p-8 max-w-md mx-auto glass-bubble-ai rounded-2xl text-center space-y-4">
+            <div className="min-h-full flex items-start justify-center py-8">
+              <div className="p-8 max-w-2xl mx-auto glass-bubble-ai rounded-2xl text-center space-y-4">
                 <div className="bg-blue-100 text-blue-600 rounded-full p-4 inline-flex shadow-sm">
                   <Robot size={32} />
                 </div>
-                <h3 className="font-bold text-xl text-neutral-800">Welcome to AI Chat</h3>
-                <p className="text-neutral-600">
-                  I'm your personal assistant. Ask me anything!
+                <h3 className="font-bold text-xl text-neutral-700 dark:text-neutral-300">Welcome to Beatsmith AI</h3>
+
+                {/* Deprecation Notice */}
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-sm text-yellow-800 dark:text-yellow-200">
+                  <p className="font-semibold">Spotify Login System Deprecated</p>
+                  <p className="mt-1">The Spotify login system has been deprecated. User-specific features requiring login are no longer available.</p>
+                </div>
+
+                <p className="text-neutral-600 dark:text-neutral-400">
+                  I can help you discover music, find similar songs, and explore artists. Here's what I can do:
                 </p>
-                <div className="grid grid-cols-1 gap-2 mt-4">
-                  <button onClick={() => setAgentInput("What's the weather in Tokyo?")} className="text-sm p-3 bg-white/50 hover:bg-white/80 rounded-xl text-left transition-colors flex items-center gap-2 text-neutral-700">
-                    <span>🌤️</span> Weather in Tokyo
-                  </button>
-                  <button onClick={() => setAgentInput("Find songs similar to Blinding Lights")} className="text-sm p-3 bg-white/50 hover:bg-white/80 rounded-xl text-left transition-colors flex items-center gap-2 text-neutral-700">
-                    <span>🎵</span> Music recommendations
-                  </button>
+
+                <div className="space-y-4 mt-6">
+                  {/* No Login Required Section */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2 text-left">Available Functions (No Login Required):</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <button onClick={() => setAgentInput("Find songs similar to cruel summer")} className="text-sm p-3 bg-white/50 hover:bg-white/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800/80 rounded-xl text-left flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+                        Find songs similar to "Cruel Summer"
+                      </button>
+                      <button onClick={() => setAgentInput("Find artists similar to the weeknd")} className="text-sm p-3 bg-white/50 hover:bg-white/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800/80 rounded-xl text-left flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+                        Find artists similar to The Weeknd
+                      </button>
+                      <button onClick={() => setAgentInput("Search for Taylor Swift on Spotify")} className="text-sm p-3 bg-white/50 hover:bg-white/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800/80 rounded-xl text-left flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+                        Search for tracks and artists
+                      </button>
+                      <button onClick={() => setAgentInput("Get track information for a song")} className="text-sm p-3 bg-white/50 hover:bg-white/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800/80 rounded-xl text-left flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+                        Get detailed track information
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Login Required Section */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2 text-left">Deprecated Functions (Login Required - No Longer Available):</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Get your top artists and tracks
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Get your recently played songs
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Access your playlists and liked songs
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Create and manage playlists
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Generate mood-based playlists
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Analyze your music taste
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
