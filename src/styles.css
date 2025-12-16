@@ -43,9 +43,7 @@
 
   /* Easings & transitions */
   --ease-bounce: cubic-bezier(0.2, 0, 0, 1.5);
-  --default-transition-duration: 100ms
-    /* snappier than default 150ms */
-  ;
+  --default-transition-duration: 100ms /* snappier than default 150ms */;
 
   /* Animation */
   --animate-refresh: refresh 0.5s ease-in-out infinite;
@@ -56,32 +54,20 @@
 
   --color-neutral-50: oklch(0.985 0 0);
   --color-neutral-100: oklch(0.97 0 0);
-  --color-neutral-150: oklch(0.96 0 0)
-    /*new */
-  ;
+  --color-neutral-150: oklch(0.96 0 0) /*new */;
   --color-neutral-200: oklch(0.922 0 0);
-  --color-neutral-250: oklch(0.9 0 0)
-    /* new */
-  ;
+  --color-neutral-250: oklch(0.9 0 0) /* new */;
   --color-neutral-300: oklch(0.87 0 0);
   --color-neutral-400: oklch(0.708 0 0);
-  --color-neutral-450: oklch(0.62 0 0)
-    /* new */
-  ;
+  --color-neutral-450: oklch(0.62 0 0) /* new */;
   --color-neutral-500: oklch(0.556 0 0);
   --color-neutral-600: oklch(0.439 0 0);
   --color-neutral-700: oklch(0.371 0 0);
-  --color-neutral-750: oklch(0.31 0 0)
-    /* new */
-  ;
+  --color-neutral-750: oklch(0.31 0 0) /* new */;
   --color-neutral-800: oklch(0.269 0 0);
-  --color-neutral-850: oklch(0.23 0 0)
-    /* new */
-  ;
+  --color-neutral-850: oklch(0.23 0 0) /* new */;
   --color-neutral-900: oklch(0.205 0 0);
-  --color-neutral-925: oklch(0.175 0 0)
-    /* new */
-  ;
+  --color-neutral-925: oklch(0.175 0 0) /* new */;
   --color-neutral-950: oklch(0.145 0 0);
 
   --color-red-650: oklch(0.55 0.238 27.4);
@@ -201,7 +187,6 @@
 
 /* Animations */
 @keyframes float-slow {
-
   0%,
   100% {
     transform: translateY(0px);

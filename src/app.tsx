@@ -26,7 +26,6 @@ import {
 // List of tools that require human confirmation
 // NOTE: this should match the tools that don't have execute functions in tools.ts
 const toolsRequiringConfirmation: (keyof typeof tools)[] = [
-  "getWeatherInformation",
   "searchSpotifyArtist"
 ];
 
@@ -157,15 +156,24 @@ export default function Chat() {
   };
 
   return (
-    <div className="h-[100vh] w-full p-4 flex justify-center items-center bg-fixed overflow-hidden" style={{ background: "var(--gradient-bg)" }}>
+    <div
+      className="h-[100vh] w-full p-4 flex justify-center items-center bg-fixed overflow-hidden"
+      style={{ background: "var(--gradient-bg)" }}
+    >
       {/* Animated Background Elements */}
       <div className="fixed top-20 left-20 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl animate-float pointer-events-none" />
-      <div className="fixed bottom-20 right-20 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl animate-float pointer-events-none" style={{ animationDelay: "-3s" }} />
+      <div
+        className="fixed bottom-20 right-20 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl animate-float pointer-events-none"
+        style={{ animationDelay: "-3s" }}
+      />
 
       <HasOpenAIKey />
       <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col rounded-2xl overflow-hidden relative glass-panel">
         {/* Header */}
-        <div className="px-5 py-4 flex items-center gap-3 sticky top-0 z-10 backdrop-blur-md border-b border-white/20" style={{ background: "var(--gradient-primary)" }}>
+        <div
+          className="px-5 py-4 flex items-center gap-3 sticky top-0 z-10 backdrop-blur-md border-b border-white/20"
+          style={{ background: "var(--gradient-primary)" }}
+        >
           <div className="flex items-center justify-center h-10 w-10 bg-white/20 rounded-full backdrop-blur-sm shadow-sm">
             <svg
               width="24px"
@@ -198,7 +206,11 @@ export default function Chat() {
               className="btn-liquid h-10 w-10 text-white rounded-full flex items-center justify-center backdrop-blur-md bg-white/20 border border-white/30 shadow-lg hover:bg-white/30 hover:scale-105 transition-all duration-300"
               onClick={toggleTheme}
             >
-              {theme === "dark" ? <Sun size={20} weight="fill" /> : <Moon size={20} weight="fill" />}
+              {theme === "dark" ? (
+                <Sun size={20} weight="fill" />
+              ) : (
+                <Moon size={20} weight="fill" />
+              )}
             </Button>
           </div>
 
@@ -218,22 +230,104 @@ export default function Chat() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-28 max-h-[calc(100vh-10rem)] scrollbar-hide">
           {agentMessages.length === 0 && (
-            <div className="h-full flex items-center justify-center">
-              <div className="p-8 max-w-md mx-auto glass-bubble-ai rounded-2xl text-center space-y-4">
+            <div className="min-h-full flex items-start justify-center py-8">
+              <div className="p-8 max-w-2xl mx-auto glass-bubble-ai rounded-2xl text-center space-y-4">
                 <div className="bg-blue-100 text-blue-600 rounded-full p-4 inline-flex shadow-sm">
                   <Robot size={32} />
                 </div>
-                <h3 className="font-bold text-xl text-neutral-800">Welcome to AI Chat</h3>
-                <p className="text-neutral-600">
-                  I'm your personal assistant. Ask me anything!
+                <h3 className="font-bold text-xl text-neutral-700 dark:text-neutral-300">
+                  Welcome to Beatsmith AI
+                </h3>
+
+                {/* Deprecation Notice */}
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-sm text-yellow-800 dark:text-yellow-200">
+                  <p className="font-semibold">
+                    Spotify Login System Deprecated
+                  </p>
+                  <p className="mt-1">
+                    The Spotify login system has been deprecated. User-specific
+                    features requiring login are no longer available.
+                  </p>
+                </div>
+
+                <p className="text-neutral-600 dark:text-neutral-400">
+                  I can help you discover music, find similar songs, and explore
+                  artists. Here's what I can do:
                 </p>
-                <div className="grid grid-cols-1 gap-2 mt-4">
-                  <button onClick={() => setAgentInput("What's the weather in Tokyo?")} className="text-sm p-3 bg-white/50 hover:bg-white/80 rounded-xl text-left transition-colors flex items-center gap-2 text-neutral-700">
-                    <span>🌤️</span> Weather in Tokyo
-                  </button>
-                  <button onClick={() => setAgentInput("Find songs similar to Blinding Lights")} className="text-sm p-3 bg-white/50 hover:bg-white/80 rounded-xl text-left transition-colors flex items-center gap-2 text-neutral-700">
-                    <span>🎵</span> Music recommendations
-                  </button>
+
+                <div className="space-y-4 mt-6">
+                  {/* No Login Required Section */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2 text-left">
+                      Available Functions (No Login Required):
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAgentInput("Find songs similar to cruel summer")
+                        }
+                        className="text-sm p-3 bg-white/50 hover:bg-white/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800/80 rounded-xl text-left flex items-center gap-2 text-neutral-700 dark:text-neutral-300"
+                      >
+                        Find songs similar to "Cruel Summer"
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAgentInput("Find artists similar to the weeknd")
+                        }
+                        className="text-sm p-3 bg-white/50 hover:bg-white/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800/80 rounded-xl text-left flex items-center gap-2 text-neutral-700 dark:text-neutral-300"
+                      >
+                        Find artists similar to The Weeknd
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAgentInput("Search for Taylor Swift on Spotify")
+                        }
+                        className="text-sm p-3 bg-white/50 hover:bg-white/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800/80 rounded-xl text-left flex items-center gap-2 text-neutral-700 dark:text-neutral-300"
+                      >
+                        Search for tracks and artists
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAgentInput("Get track information for a song")
+                        }
+                        className="text-sm p-3 bg-white/50 hover:bg-white/80 dark:bg-neutral-800/50 dark:hover:bg-neutral-800/80 rounded-xl text-left flex items-center gap-2 text-neutral-700 dark:text-neutral-300"
+                      >
+                        Get detailed track information
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Login Required Section */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2 text-left">
+                      Deprecated Functions (Login Required - No Longer
+                      Available):
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Get your top artists and tracks
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Get your recently played songs
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Access your playlists and liked songs
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Create and manage playlists
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Generate mood-based playlists
+                      </div>
+                      <div className="text-sm p-3 bg-white/50 dark:bg-neutral-800/50 rounded-xl text-left flex items-center gap-2 text-neutral-500 dark:text-neutral-500 opacity-60">
+                        Analyze your music taste
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -245,10 +339,14 @@ export default function Chat() {
               index === 0 || agentMessages[index - 1]?.role !== m.role;
 
             return (
-              <div key={m.id} className={`flex ${isUser ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+              <div
+                key={m.id}
+                className={`flex ${isUser ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+              >
                 <div
-                  className={`flex gap-3 max-w-[85%] ${isUser ? "flex-row-reverse" : "flex-row"
-                    }`}
+                  className={`flex gap-3 max-w-[85%] ${
+                    isUser ? "flex-row-reverse" : "flex-row"
+                  }`}
                 >
                   {showAvatar && !isUser ? (
                     <Avatar username={"AI"} />
@@ -263,21 +361,21 @@ export default function Chat() {
                           // biome-ignore lint/suspicious/noArrayIndexKey: immutable index
                           <div key={i} className="group relative">
                             <div
-                              className={`p-4 rounded-2xl shadow-sm ${isUser
-                                ? "glass-bubble-user rounded-tr-sm"
-                                : "glass-bubble-ai rounded-tl-sm"
-                                } ${part.text.startsWith("scheduled message")
+                              className={`p-4 rounded-2xl shadow-sm ${
+                                isUser
+                                  ? "glass-bubble-user rounded-tr-sm"
+                                  : "glass-bubble-ai rounded-tl-sm"
+                              } ${
+                                part.text.startsWith("scheduled message")
                                   ? "border-accent/50"
                                   : ""
-                                }`}
+                              }`}
                             >
-                              {part.text.startsWith(
-                                "scheduled message"
-                              ) && (
-                                  <span className="absolute -top-3 -left-2 text-base">
-                                    🕒
-                                  </span>
-                                )}
+                              {part.text.startsWith("scheduled message") && (
+                                <span className="absolute -top-3 -left-2 text-base">
+                                  🕒
+                                </span>
+                              )}
                               <MemoizedMarkdown
                                 id={`${m.id}-${i}`}
                                 content={part.text.replace(
@@ -287,8 +385,9 @@ export default function Chat() {
                               />
                             </div>
                             <p
-                              className={`text-[10px] text-neutral-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${isUser ? "text-right" : "text-left"
-                                }`}
+                              className={`text-[10px] text-neutral-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${
+                                isUser ? "text-right" : "text-left"
+                              }`}
                             >
                               {formatTime(
                                 m.metadata?.createdAt
@@ -309,7 +408,10 @@ export default function Chat() {
                           );
 
                         return (
-                          <div key={`${toolCallId}-${i}`} className="glass-bubble-ai p-2 rounded-xl">
+                          <div
+                            key={toolCallId}
+                            className="glass-bubble-ai p-2 rounded-xl"
+                          >
                             <ToolInvocationCard
                               toolUIPart={part}
                               toolCallId={toolCallId}
