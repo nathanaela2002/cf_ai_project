@@ -1,7 +1,9 @@
 # [Beatsmith AI](https://beatsmith.nathanaela-2002.workers.dev/)
+
 Beatsmith AI is an AI-powered music discovery assistant built with Cloudflare's Agent platform, powered by [`agents`](https://www.npmjs.com/package/agents). You can discover new songs, find similar artists, and explore music through natural conversation with AI.
 
 ## Features
+
 - Music discovery and recommendations
 - Search Spotify tracks and artists
 - Find similar songs using Last.fm data
@@ -39,6 +41,7 @@ LASTFM_API_KEY=your_lastfm_api_key
 ```
 
 To get your API keys:
+
 - **OpenAI API Key**: Sign up at [OpenAI](https://platform.openai.com/api-keys)
 - **Spotify Credentials**: Create an app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 - **Last.fm API Key**: Get an API key at [Last.fm API](https://www.last.fm/api/account/create)
