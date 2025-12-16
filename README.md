@@ -1,8 +1,7 @@
 # Beatsmith AI
-Beatsmith AI is an AI-powered music discovery assistant built with Cloudflare's Agent platform, powered by [`agents`](https://www.npmjs.com/package/agents). Discover new songs, find similar artists, and explore music through natural conversation with AI.
+Beatsmith AI is an AI-powered music discovery assistant built with Cloudflare's Agent platform, powered by [`agents`](https://www.npmjs.com/package/agents). You can discover new songs, find similar artists, and explore music through natural conversation with AI.
 
 ## Features
-
 - Music discovery and recommendations
 - Search Spotify tracks and artists
 - Find similar songs using Last.fm data
