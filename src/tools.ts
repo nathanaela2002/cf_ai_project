@@ -2,12 +2,8 @@
  * Tool definitions for the AI chat agent
  * Tools can either require human confirmation or execute automatically
  */
-import { tool, type ToolSet } from "ai";
+import { type ToolSet, tool } from "ai";
 import { z } from "zod/v3";
-
-import type { Chat } from "./server";
-import { getCurrentAgent } from "agents";
-import { scheduleSchema } from "agents/schedule";
 
 // Helper function to get or exchange access token
 async function getAccessToken(authCode?: string): Promise<string> {
@@ -25,7 +21,7 @@ async function getAccessToken(authCode?: string): Promise<string> {
 
     // First, try to get stored tokens from KV
     const storedTokensUrl =
-        "https://beatsmith.nathanaela-2002.workers.dev/get-tokens";
+      "https://beatsmith.nathanaela-2002.workers.dev/get-tokens";
     const storedResponse = await fetch(storedTokensUrl);
 
     if (storedResponse.ok) {
@@ -111,8 +107,7 @@ async function getAccessToken(authCode?: string): Promise<string> {
         body: new URLSearchParams({
           grant_type: "authorization_code",
           code: authCode,
-          redirect_uri:
-            "https://beatsmith.nathanaela-2002.workers.dev/callback"
+          redirect_uri: "https://beatsmith.nathanaela-2002.workers.dev/callback"
         })
       }
     );
@@ -132,18 +127,15 @@ async function getAccessToken(authCode?: string): Promise<string> {
 
     // Store the tokens for future use
     const expiresAt = Date.now() + tokens.expires_in * 1000;
-    await fetch(
-          "https://beatsmith.nathanaela-2002.workers.dev/store-tokens",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          access_token: tokens.access_token,
-          expires_at: expiresAt,
-          refresh_token: tokens.refresh_token
-        })
-      }
-    );
+    await fetch("https://beatsmith.nathanaela-2002.workers.dev/store-tokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        access_token: tokens.access_token,
+        expires_at: expiresAt,
+        refresh_token: tokens.refresh_token
+      })
+    });
 
     return tokens.access_token;
   } catch (error) {
@@ -152,16 +144,6 @@ async function getAccessToken(authCode?: string): Promise<string> {
     );
   }
 }
-
-/**
- * Weather information tool that requires human confirmation
- * When invoked, this will present a confirmation dialog to the user
- */
-const getWeatherInformation = tool({
-  description: "show the weather in a given city to the user",
-  inputSchema: z.object({ city: z.string() })
-  // Omitting execute function makes this tool require human confirmation
-});
 
 /**
  * Spotify login tool that executes automatically
@@ -329,95 +311,6 @@ const searchSpotifyArtist = tool({
     query: z.string().describe("Artist name to search for or Spotify artist ID")
   })
   // Omitting execute function makes this tool require human confirmation
-});
-
-/**
- * Local time tool that executes automatically
- * Since it includes an execute function, it will run without user confirmation
- * This is suitable for low-risk operations that don't need oversight
- */
-const getLocalTime = tool({
-  description: "get the local time for a specified location",
-  inputSchema: z.object({ location: z.string() }),
-  execute: async ({ location }) => {
-    console.log(`Getting local time for ${location}`);
-    return "10am";
-  }
-});
-
-const scheduleTask = tool({
-  description: "A tool to schedule a task to be executed at a later time",
-  inputSchema: scheduleSchema,
-  execute: async ({ when, description }) => {
-    // we can now read the agent context from the ALS store
-    const { agent } = getCurrentAgent<Chat>();
-
-    function throwError(msg: string): string {
-      throw new Error(msg);
-    }
-    if (when.type === "no-schedule") {
-      return "Not a valid schedule input";
-    }
-    const input =
-      when.type === "scheduled"
-        ? when.date // scheduled
-        : when.type === "delayed"
-          ? when.delayInSeconds // delayed
-          : when.type === "cron"
-            ? when.cron // cron
-            : throwError("not a valid schedule input");
-    try {
-      agent!.schedule(input!, "executeTask", description);
-    } catch (error) {
-      console.error("error scheduling task", error);
-      return `Error scheduling task: ${error}`;
-    }
-    return `Task scheduled for type "${when.type}" : ${input}`;
-  }
-});
-
-/**
- * Tool to list all scheduled tasks
- * This executes automatically without requiring human confirmation
- */
-const getScheduledTasks = tool({
-  description: "List all tasks that have been scheduled",
-  inputSchema: z.object({}),
-  execute: async () => {
-    const { agent } = getCurrentAgent<Chat>();
-
-    try {
-      const tasks = agent!.getSchedules();
-      if (!tasks || tasks.length === 0) {
-        return "No scheduled tasks found.";
-      }
-      return tasks;
-    } catch (error) {
-      console.error("Error listing scheduled tasks", error);
-      return `Error listing scheduled tasks: ${error}`;
-    }
-  }
-});
-
-/**
- * Tool to cancel a scheduled task by its ID
- * This executes automatically without requiring human confirmation
- */
-const cancelScheduledTask = tool({
-  description: "Cancel a scheduled task using its ID",
-  inputSchema: z.object({
-    taskId: z.string().describe("The ID of the task to cancel")
-  }),
-  execute: async ({ taskId }) => {
-    const { agent } = getCurrentAgent<Chat>();
-    try {
-      await agent!.cancelSchedule(taskId);
-      return `Task ${taskId} has been successfully canceled.`;
-    } catch (error) {
-      console.error("Error canceling scheduled task", error);
-      return `Error canceling task ${taskId}: ${error}`;
-    }
-  }
 });
 
 /**
@@ -775,7 +668,9 @@ const getSpotifyTrack = tool({
   description:
     "Get detailed metadata for a Spotify track by its ID, including duration, popularity, explicit flag, preview URL, album, and artist information",
   inputSchema: z.object({
-    trackId: z.string().describe("The Spotify track ID (e.g., 11dFghVXANMlKmJXsNCbNl)")
+    trackId: z
+      .string()
+      .describe("The Spotify track ID (e.g., 11dFghVXANMlKmJXsNCbNl)")
   }),
   execute: async ({ trackId }) => {
     try {
@@ -982,7 +877,13 @@ const createSpotifyPlaylist = tool({
         "The authorization code (optional if tokens are already stored)"
       )
   }),
-  execute: async ({ name, description, public: isPublic, userId, authCode }) => {
+  execute: async ({
+    name,
+    description,
+    public: isPublic,
+    userId,
+    authCode
+  }) => {
     try {
       // Get access token (will use stored token or exchange code)
       const accessToken = await getAccessToken(authCode);
@@ -1119,9 +1020,7 @@ const removeTracksFromPlaylist = tool({
     snapshotId: z
       .string()
       .optional()
-      .describe(
-        "Optional snapshot ID for optimistic concurrency control"
-      ),
+      .describe("Optional snapshot ID for optimistic concurrency control"),
     authCode: z
       .string()
       .optional()
@@ -1389,7 +1288,9 @@ const getRelatedArtists = tool({
   description:
     "Get artists similar to a given artist. Useful for music discovery and finding new tracks similar to user's favorites.",
   inputSchema: z.object({
-    artistId: z.string().describe("The Spotify artist ID to find related artists for")
+    artistId: z
+      .string()
+      .describe("The Spotify artist ID to find related artists for")
   }),
   execute: async ({ artistId }) => {
     try {
@@ -1482,15 +1383,20 @@ const getRelatedArtists = tool({
 //   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 // }
 
-
 /**
  * Helper: Normalize track name to detect variations (remixes, slowed, etc.)
  */
 function normalizeTrackNameForComparison(name: string): string {
   return name
     .toLowerCase()
-    .replace(/\s*[-\(](with|feat|ft\.|slowed|sped|remix|version|extended|acoustic|live|reverb|reprise|instrumental).*$/i, "")
-    .replace(/\s*[-\(](remix|version|extended|acoustic|live|reverb|reprise|instrumental).*$/i, "")
+    .replace(
+      /\s*[-(](with|feat|ft\.|slowed|sped|remix|version|extended|acoustic|live|reverb|reprise|instrumental).*$/i,
+      ""
+    )
+    .replace(
+      /\s*[-(](remix|version|extended|acoustic|live|reverb|reprise|instrumental).*$/i,
+      ""
+    )
     .trim();
 }
 
@@ -1504,15 +1410,19 @@ async function getLastFmSimilarTracks(
   limit: number = 10
 ): Promise<Array<{ name: string; artist: string; match: number }>> {
   if (!process.env.LASTFM_API_KEY) {
-    console.warn('DEBUG: No Last.fm API key found in process.env');
+    console.warn("DEBUG: No Last.fm API key found in process.env");
     return [];
   }
 
-  console.log(`DEBUG: Fetching Last.fm similar tracks for ${trackName} by ${artistName}`);
+  console.log(
+    `DEBUG: Fetching Last.fm similar tracks for ${trackName} by ${artistName}`
+  );
 
   try {
     const url = `http://ws.audioscrobbler.com/2.0/?method=track.getSimilar&artist=${encodeURIComponent(artistName)}&track=${encodeURIComponent(trackName)}&api_key=${process.env.LASTFM_API_KEY}&format=json&limit=${limit}`;
-    console.log(`DEBUG: Last.fm URL: ${url.replace(process.env.LASTFM_API_KEY, 'HIDDEN_KEY')}`);
+    console.log(
+      `DEBUG: Last.fm URL: ${url.replace(process.env.LASTFM_API_KEY, "HIDDEN_KEY")}`
+    );
 
     const response = await fetch(url);
     console.log(`DEBUG: Last.fm response status: ${response.status}`);
@@ -1533,13 +1443,15 @@ async function getLastFmSimilarTracks(
       : [data.similartracks.track];
 
     console.log(`DEBUG: Found ${tracks.length} similar tracks from Last.fm`);
-    return tracks.map((t: any) => ({
-      name: t.name,
-      artist: t.artist.name,
-      match: Number(t.match) // 0-1 similarity score
-    }));
+    return tracks.map(
+      (t: { name: string; artist: { name: string }; match: number }) => ({
+        name: t.name,
+        artist: t.artist.name,
+        match: Number(t.match) // 0-1 similarity score
+      })
+    );
   } catch (error) {
-    console.error('DEBUG: Error fetching Last.fm similar tracks:', error);
+    console.error("DEBUG: Error fetching Last.fm similar tracks:", error);
     return [];
   }
 }
@@ -1576,7 +1488,12 @@ const findSimilarTracks = tool({
         "The authorization code (optional if tokens are already stored, needed for excludeUserTracks)"
       )
   }),
-  execute: async ({ trackQuery, limit = 10, excludeUserTracks = false, authCode }) => {
+  execute: async ({
+    trackQuery,
+    limit = 10,
+    excludeUserTracks = false,
+    authCode
+  }) => {
     try {
       let accessToken: string | null = null;
 
@@ -1658,17 +1575,25 @@ const findSimilarTracks = tool({
       if (targetArtist) {
         // If user specified an artist, look for it in the results
         // Prioritize exact matches, then partial matches
-        const artistMatch = searchData.tracks.items.find(track =>
-          track.artists.some(a => a.name.toLowerCase() === targetArtist)
-        ) || searchData.tracks.items.find(track =>
-          track.artists.some(a => a.name.toLowerCase().includes(targetArtist!))
-        );
+        const artistMatch =
+          searchData.tracks.items.find((track) =>
+            track.artists.some((a) => a.name.toLowerCase() === targetArtist)
+          ) ||
+          searchData.tracks.items.find((track) =>
+            track.artists.some((a) =>
+              a.name.toLowerCase().includes(targetArtist!)
+            )
+          );
 
         if (artistMatch) {
-          console.log(`DEBUG: Found artist match for "${targetArtist}": ${artistMatch.artists[0].name}`);
+          console.log(
+            `DEBUG: Found artist match for "${targetArtist}": ${artistMatch.artists[0].name}`
+          );
           seedTrack = artistMatch;
         } else {
-          console.log(`DEBUG: No direct artist match for "${targetArtist}", using top result: ${seedTrack.artists[0].name}`);
+          console.log(
+            `DEBUG: No direct artist match for "${targetArtist}", using top result: ${seedTrack.artists[0].name}`
+          );
         }
       } else {
         // If no artist specified, prefer tracks that are NOT karaoke/cover/instrumental if possible
@@ -1676,14 +1601,16 @@ const findSimilarTracks = tool({
         const isCoverQuery = /karaoke|instrumental|cover/i.test(trackQuery);
 
         if (!isCoverQuery) {
-          const nonCover = searchData.tracks.items.find(track => {
+          const nonCover = searchData.tracks.items.find((track) => {
             const name = track.name.toLowerCase();
             const artist = track.artists[0].name.toLowerCase();
-            return !name.includes("karaoke") &&
+            return (
+              !name.includes("karaoke") &&
               !name.includes("instrumental") &&
               !name.includes("cover") &&
               !artist.includes("karaoke") &&
-              !artist.includes("tribute");
+              !artist.includes("tribute")
+            );
           });
 
           if (nonCover) {
@@ -1692,13 +1619,18 @@ const findSimilarTracks = tool({
         }
       }
 
-
       const seedArtist = seedTrack.artists[0];
-      const seedNormalizedName = normalizeTrackNameForComparison(seedTrack.name);
+      const seedNormalizedName = normalizeTrackNameForComparison(
+        seedTrack.name
+      );
       const seenNormalizedNames = new Set<string>();
 
       // Step 2: Get similar tracks from Last.fm ONLY
-      const lastFmTracks = await getLastFmSimilarTracks(seedTrack.name, seedArtist.name, limit * 2);
+      const lastFmTracks = await getLastFmSimilarTracks(
+        seedTrack.name,
+        seedArtist.name,
+        limit * 2
+      );
 
       if (lastFmTracks.length === 0) {
         return `No similar tracks found for "${seedTrack.name}" by ${seedArtist.name} on Last.fm.`;
@@ -1709,10 +1641,9 @@ const findSimilarTracks = tool({
       if (excludeUserTracks && authCode) {
         try {
           const [topTracksRes, likedRes] = await Promise.all([
-            fetch(
-              "https://api.spotify.com/v1/me/top/tracks?limit=50",
-              { headers: { Authorization: `Bearer ${accessToken}` } }
-            ).catch(() => null),
+            fetch("https://api.spotify.com/v1/me/top/tracks?limit=50", {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            }).catch(() => null),
             fetch("https://api.spotify.com/v1/me/tracks?limit=50", {
               headers: { Authorization: `Bearer ${accessToken}` }
             }).catch(() => null)
@@ -1722,14 +1653,18 @@ const findSimilarTracks = tool({
             const topTracks = (await topTracksRes.json()) as {
               items: Array<{ id: string }>;
             };
-            topTracks.items.forEach((t) => excludeIds.add(t.id));
+            topTracks.items.forEach((t) => {
+              excludeIds.add(t.id);
+            });
           }
 
           if (likedRes?.ok) {
             const liked = (await likedRes.json()) as {
               items: Array<{ track: { id: string } }>;
             };
-            liked.items.forEach((item) => excludeIds.add(item.track.id));
+            liked.items.forEach((item) => {
+              excludeIds.add(item.track.id);
+            });
           }
         } catch {
           // Continue without exclusion if fetch fails
@@ -1791,15 +1726,22 @@ const findSimilarTracks = tool({
               let track = searchData.tracks.items[0];
 
               if (targetArtist) {
-                const artistMatch = searchData.tracks.items.find(t =>
-                  t.artists.some(a => a.name.toLowerCase().includes(targetArtist!))
+                const artistMatch = searchData.tracks.items.find((t) =>
+                  t.artists.some((a) =>
+                    a.name.toLowerCase().includes(targetArtist!)
+                  )
                 );
                 if (artistMatch) track = artistMatch;
               }
 
               // Filter out variations/remixes of the seed track
-              const trackNormalized = normalizeTrackNameForComparison(track.name);
-              if (trackNormalized === seedNormalizedName || seenNormalizedNames.has(trackNormalized)) {
+              const trackNormalized = normalizeTrackNameForComparison(
+                track.name
+              );
+              if (
+                trackNormalized === seedNormalizedName ||
+                seenNormalizedNames.has(trackNormalized)
+              ) {
                 continue;
               }
 
@@ -1887,12 +1829,19 @@ const summarizeUserTaste = tool({
               headers: { Authorization: `Bearer ${accessToken}` }
             }
           ),
-          fetch("https://api.spotify.com/v1/me/player/recently-played?limit=30", {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          })
+          fetch(
+            "https://api.spotify.com/v1/me/player/recently-played?limit=30",
+            {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            }
+          )
         ]);
 
-      if (!topArtistsResponse.ok || !topTracksResponse.ok || !recentResponse.ok) {
+      if (
+        !topArtistsResponse.ok ||
+        !topTracksResponse.ok ||
+        !recentResponse.ok
+      ) {
         return "Failed to fetch listening data for taste analysis.";
       }
 
@@ -1929,13 +1878,22 @@ const summarizeUserTaste = tool({
       let vibe = "eclectic";
       if (vibeKeywords.includes("pop") || vibeKeywords.includes("r&b")) {
         vibe = "mainstream contemporary";
-      } else if (vibeKeywords.includes("indie") || vibeKeywords.includes("alternative")) {
+      } else if (
+        vibeKeywords.includes("indie") ||
+        vibeKeywords.includes("alternative")
+      ) {
         vibe = "indie alternative";
-      } else if (vibeKeywords.includes("rock") || vibeKeywords.includes("metal")) {
+      } else if (
+        vibeKeywords.includes("rock") ||
+        vibeKeywords.includes("metal")
+      ) {
         vibe = "rock-focused";
       } else if (vibeKeywords.includes("hip") || vibeKeywords.includes("rap")) {
         vibe = "hip-hop vibes";
-      } else if (vibeKeywords.includes("electronic") || vibeKeywords.includes("edm")) {
+      } else if (
+        vibeKeywords.includes("electronic") ||
+        vibeKeywords.includes("edm")
+      ) {
         vibe = "electronic";
       }
 
@@ -2005,36 +1963,36 @@ const generatePlaylistByMood = tool({
       };
 
       // Step 2: Get user's top tracks for reference
-      const [topTracksResponse, likedResponse] =
-        await Promise.all([
-          fetch(
-            "https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=20",
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-          ),
-          fetch("https://api.spotify.com/v1/me/tracks?limit=20", {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          }).catch(() => null)
-        ]);
+      const [topTracksResponse, likedResponse] = await Promise.all([
+        fetch(
+          "https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=20",
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        ),
+        fetch("https://api.spotify.com/v1/me/tracks?limit=20", {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }).catch(() => null)
+      ]);
 
-      const topTracks =
-        topTracksResponse.ok
-          ? ((await topTracksResponse.json()) as {
+      const topTracks = topTracksResponse.ok
+        ? ((await topTracksResponse.json()) as {
             items: Array<{ id: string; uri: string }>;
           })
-          : { items: [] };
+        : { items: [] };
       const likedTracks = likedResponse?.ok
         ? ((await likedResponse.json()) as {
-          items: Array<{ track: { id: string; uri: string } }>;
-        })
+            items: Array<{ track: { id: string; uri: string } }>;
+          })
         : { items: [] };
 
       // Build exclusion set if familiarity is "new"
       const excludeIds = new Set<string>();
       if (familiarity === "new") {
-        topTracks.items.forEach((track) => excludeIds.add(track.id));
-        likedTracks.items.forEach((item) =>
-          excludeIds.add(item.track.id)
-        );
+        topTracks.items.forEach((track) => {
+          excludeIds.add(track.id);
+        });
+        likedTracks.items.forEach((item) => {
+          excludeIds.add(item.track.id);
+        });
       }
 
       // Step 3: Get tracks using Last.fm similarity
@@ -2045,13 +2003,13 @@ const generatePlaylistByMood = tool({
       // Get top tracks with full metadata (name and artist)
       const topTracksWithMetadata = topTracksResponse.ok
         ? ((await topTracksResponse.json()) as {
-          items: Array<{
-            id: string;
-            uri: string;
-            name: string;
-            artists: Array<{ name: string }>;
-          }>;
-        })
+            items: Array<{
+              id: string;
+              uri: string;
+              name: string;
+              artists: Array<{ name: string }>;
+            }>;
+          })
         : { items: [] };
 
       // If familiarity is "familiar", use top tracks directly
@@ -2066,16 +2024,20 @@ const generatePlaylistByMood = tool({
         // For "new" or "mixed", use Last.fm to find similar tracks
         // Sample a few top tracks to get their Last.fm similar tracks
         const sampleTracks = topTracksWithMetadata.items.slice(0, 5);
-        
+
         for (const seedTrack of sampleTracks) {
           if (trackUris.length >= 20) break;
-          
+
           const artistName = seedTrack.artists[0]?.name || "";
           if (!artistName) continue;
 
           try {
             // Get Last.fm similar tracks
-            const lastFmTracks = await getLastFmSimilarTracks(seedTrack.name, artistName, 10);
+            const lastFmTracks = await getLastFmSimilarTracks(
+              seedTrack.name,
+              artistName,
+              10
+            );
 
             // Search each Last.fm track on Spotify
             for (const lfmTrack of lastFmTracks) {
@@ -2137,7 +2099,8 @@ const generatePlaylistByMood = tool({
       }
 
       // Step 5: Create playlist
-      const finalName = playlistName || `Mood: ${mood.charAt(0).toUpperCase() + mood.slice(1)}`;
+      const finalName =
+        playlistName || `Mood: ${mood.charAt(0).toUpperCase() + mood.slice(1)}`;
       const createResponse = await fetch(
         `https://api.spotify.com/v1/users/${profile.id}/playlists`,
         {
@@ -2195,11 +2158,6 @@ const generatePlaylistByMood = tool({
  * These will be provided to the AI model to describe available capabilities
  */
 export const tools = {
-  getWeatherInformation,
-  getLocalTime,
-  scheduleTask,
-  getScheduledTasks,
-  cancelScheduledTask,
   loginToSpotify,
   getUserTopArtists,
   getUserSpotifyProfile,
@@ -2228,10 +2186,6 @@ export const tools = {
  * Each function here corresponds to a tool above that doesn't have an execute function
  */
 export const executions = {
-  getWeatherInformation: async ({ city }: { city: string }) => {
-    console.log(`Getting weather information for ${city}`);
-    return `The weather in ${city} is sunny`;
-  },
   searchSpotifyArtist: async ({ query }: { query: string }) => {
     try {
       console.log(`Searching for artist: ${query}`);
