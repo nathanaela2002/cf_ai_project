@@ -1,9 +1,4 @@
 # Beatsmith AI
-
-![npm i agents command](./npm-agents-banner.svg)
-
-<a href="https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/agents-starter"><img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare"/></a>
-
 Beatsmith AI is an AI-powered music discovery assistant built with Cloudflare's Agent platform, powered by [`agents`](https://www.npmjs.com/package/agents). Discover new songs, find similar artists, and explore music through natural conversation with AI.
 
 ## Features
